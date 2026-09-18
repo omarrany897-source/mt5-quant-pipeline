@@ -107,6 +107,14 @@ Trigger each phase individually by opening a GitHub Issue with the exact body te
 - **Live logs:** GitHub Actions → Pipeline Orchestrator
 - **Final answer:** `outputs/final/latest.md` after merge
 
+### Forced Free-Alternative Recovery
+
+To force an agent to replace a paid or unavailable source, comment this on the tracking issue:
+
+```
+@gemini-cli Read the previous output. The required data source or API is paid or out of quota. Re-evaluate the strategy using ONLY the most reliable, best possible free alternative data sources and adjust the mathematical rules and pseudocode to match the new free data structure. Output the updated specification.
+```
+
 ---
 
 ## Directory Structure

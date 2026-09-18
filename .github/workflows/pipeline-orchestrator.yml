@@ -70,6 +70,9 @@ jobs:
       - name: Agent 1 — Researcher
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY_BACKUP: ${{ secrets.GEMINI_API_KEY_BACKUP }}
+          GEMINI_TIMEOUT_SECONDS: 5400
+          MAX_ATTEMPTS: 2
         run: |
           chmod +x scripts/run-agent-phase.sh
           ./scripts/run-agent-phase.sh 01-researcher outputs/01-researcher.md
@@ -77,7 +80,7 @@ jobs:
       - name: Commit Phase 1 output
         run: |
           chmod +x scripts/commit-phase-output.sh
-          ./scripts/commit-phase-output.sh outputs/01-researcher.md 02-analyst ${{ env.RUN_ID }}
+          ./scripts/commit-phase-output.sh outputs/01-researcher.md 02-analyst ${{ env.RUN_ID }} "" "${{ needs.setup.outputs.branch }}"
 
   phase-2-analyst:
     needs: phase-1-researcher
@@ -92,6 +95,8 @@ jobs:
       - name: Agent 2 — Analyst
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY_BACKUP: ${{ secrets.GEMINI_API_KEY_BACKUP }}
+          GEMINI_TIMEOUT_SECONDS: 3600
         run: |
           chmod +x scripts/run-agent-phase.sh
           ./scripts/run-agent-phase.sh 02-analyst outputs/02-analyst.md outputs/01-researcher.md
@@ -99,7 +104,7 @@ jobs:
       - name: Commit Phase 2 output
         run: |
           chmod +x scripts/commit-phase-output.sh
-          ./scripts/commit-phase-output.sh outputs/02-analyst.md 03-strategy-designer ${{ env.RUN_ID }}
+          ./scripts/commit-phase-output.sh outputs/02-analyst.md 03-strategy-designer ${{ env.RUN_ID }} "" "${{ needs.setup.outputs.branch }}"
 
   phase-3-strategy-designer:
     needs: phase-2-analyst
@@ -114,6 +119,8 @@ jobs:
       - name: Agent 3 — Strategy Designer
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY_BACKUP: ${{ secrets.GEMINI_API_KEY_BACKUP }}
+          GEMINI_TIMEOUT_SECONDS: 3600
         run: |
           chmod +x scripts/run-agent-phase.sh
           ./scripts/run-agent-phase.sh 03-strategy-designer outputs/03-strategy-designer.md outputs/02-analyst.md
@@ -121,7 +128,7 @@ jobs:
       - name: Commit Phase 3 output
         run: |
           chmod +x scripts/commit-phase-output.sh
-          ./scripts/commit-phase-output.sh outputs/03-strategy-designer.md 04-mt5-engineer ${{ env.RUN_ID }}
+          ./scripts/commit-phase-output.sh outputs/03-strategy-designer.md 04-mt5-engineer ${{ env.RUN_ID }} "" "${{ needs.setup.outputs.branch }}"
 
   phase-4-mt5-engineer:
     needs: phase-3-strategy-designer
@@ -136,6 +143,8 @@ jobs:
       - name: Agent 4 — MT5 Engineer
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY_BACKUP: ${{ secrets.GEMINI_API_KEY_BACKUP }}
+          GEMINI_TIMEOUT_SECONDS: 3600
         run: |
           chmod +x scripts/run-agent-phase.sh
           ./scripts/run-agent-phase.sh 04-mt5-engineer outputs/04-mt5-engineer.md outputs/03-strategy-designer.md
@@ -143,7 +152,7 @@ jobs:
       - name: Commit Phase 4 output
         run: |
           chmod +x scripts/commit-phase-output.sh
-          ./scripts/commit-phase-output.sh outputs/04-mt5-engineer.md done ${{ env.RUN_ID }} "Experts/"
+          ./scripts/commit-phase-output.sh outputs/04-mt5-engineer.md done ${{ env.RUN_ID }} "Experts/" "${{ needs.setup.outputs.branch }}"
 
   finalize:
     needs: [setup, phase-4-mt5-engineer]
@@ -165,8 +174,12 @@ jobs:
           git config user.name "gemini-cli[bot]"
           git config user.email "gemini-cli[bot]@users.noreply.github.com"
           git add outputs/final/ pipeline/state.json
-          git commit -m "feat(pipeline): final consolidated output [run ${{ env.RUN_ID }}]"
-          git push
+          if git diff --cached --quiet; then
+            echo "Nothing new to commit."
+          else
+            git commit -m "feat(pipeline): final consolidated output [run ${{ env.RUN_ID }}]"
+            git push origin "HEAD:${{ needs.setup.outputs.branch }}"
+          fi
 
       - name: Upload final output artifact
         uses: actions/upload-artifact@v4

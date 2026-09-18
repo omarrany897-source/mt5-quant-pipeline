@@ -3,6 +3,12 @@ OBJECTIVE: Triage Agent 1's Candidate Strategy Set down to 5-10 mechanically aut
 
 INPUT: Read `outputs/01-researcher.md`. Do not invent new raw statistical data.
 
+RESOURCE & QUOTA FALLBACK PROTOCOL:
+If you encounter a paywall, API quota exhaustion, or access denial for any required data source, academic journal, or software tool, you must NOT halt execution.
+1. Immediately search for and identify the most reliable, highest-quality free alternative (e.g., SSRN/arXiv for papers, Yahoo Finance/Tiingo for OHLCV data, or open-source equivalents for libraries).
+2. Seamlessly pivot to this free alternative to complete your objective.
+3. Briefly log the substitution in your output (e.g., "Note: Primary source quota exceeded; utilized [Alternative Source] instead.").
+
 EVALUATION & FILTERING PROTOCOL:
 1. MT5 Feasibility Filter: Rate implementation complexity as Very Easy, Easy, Moderate, Difficult, or Very Difficult[cite: 17]. Prioritize retail implementability (standard OHLCV/tick data, standard indicators). Reject candidates requiring proprietary order flow or expensive alternative data[cite: 17].
 2. Zero-Discretion Audit: Reject or heavily penalize strategies requiring visual interpretation (e.g., "looks like a strong trend", "clean market structure", "beautiful candle")[cite: 17].

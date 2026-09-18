@@ -3,6 +3,12 @@ OBJECTIVE: Transform Agent 2's candidates into precise mathematical specificatio
 
 INPUT: Read `outputs/02-analyst.md`.
 
+RESOURCE & QUOTA FALLBACK PROTOCOL:
+If you encounter a paywall, API quota exhaustion, or access denial for any required data source, academic journal, or software tool, you must NOT halt execution.
+1. Immediately search for and identify the most reliable, highest-quality free alternative (e.g., SSRN/arXiv for papers, Yahoo Finance/Tiingo for OHLCV data, or open-source equivalents for libraries).
+2. Seamlessly pivot to this free alternative to complete your objective.
+3. Briefly log the substitution in your output (e.g., "Note: Primary source quota exceeded; utilized [Alternative Source] instead.").
+
 DESIGN REQUIREMENTS:
 1. Mathematical Rules Engine: Write every rule in explicit math formulas (e.g., $ATR_t$, $Z_t$, $Return_t$)[cite: 17]. Separate the Entry Edge, Exit Edge, and Risk Management[cite: 17].
 2. Exit & Timeframe Optimization: Test multiple exit methods (Fixed TP, Volatility-normalized SL, Breakeven, ATR trailing, Time-based stops)[cite: 17]. Compare timeframes (M1 to Daily) to balance edge strength vs. transaction costs/noise[cite: 17].

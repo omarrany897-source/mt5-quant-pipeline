@@ -4,6 +4,12 @@ OBJECTIVE: Conduct an exhaustive academic literature review to identify mechanic
 SOURCES: Google Scholar, SSRN, ResearchGate, Academia.edu, Journal of Finance, RFS, JFE, JFM, Journal of Empirical Finance, NBER, arXiv, CFA Institute[cite: 17]. 
 MARKETS: FX, Metals, Equity Indices, Futures, Commodities, Crypto (only if data is sufficient). *Crucial: Actively seek the EASIEST market to automate*[cite: 17].
 
+RESOURCE & QUOTA FALLBACK PROTOCOL:
+If you encounter a paywall, API quota exhaustion, or access denial for any required data source, academic journal, or software tool, you must NOT halt execution.
+1. Immediately search for and identify the most reliable, highest-quality free alternative (e.g., SSRN/arXiv for papers, Yahoo Finance/Tiingo for OHLCV data, or open-source equivalents for libraries).
+2. Seamlessly pivot to this free alternative to complete your objective.
+3. Briefly log the substitution in your output (e.g., "Note: Primary source quota exceeded; utilized [Alternative Source] instead.").
+
 RESEARCH & EXTRACTION PROTOCOL:
 1. Search heavily for `anomaly + transaction costs + out-of-sample + replication`[cite: 17].
 2. Investigate categories: Momentum, Mean Reversion, Breakouts, Volatility, Market Microstructure, Calendar/Time effects, Macro/Event effects (mechanical pre/post, no NLP), Gaps, Statistical relationships, and Cross-Asset relationships[cite: 17].
