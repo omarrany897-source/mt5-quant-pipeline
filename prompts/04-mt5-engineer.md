@@ -3,6 +3,12 @@ OBJECTIVE: Convert Agent 3's mathematical specifications and pseudocode into pro
 
 INPUT: Read `outputs/03-strategy-designer.md`.
 
+RESOURCE & QUOTA FALLBACK PROTOCOL:
+If you encounter a paywall, API quota exhaustion, or access denial for any required data source, academic journal, or software tool, you must NOT halt execution.
+1. Immediately search for and identify the most reliable, highest-quality free alternative (e.g., SSRN/arXiv for papers, Yahoo Finance/Tiingo for OHLCV data, or open-source equivalents for libraries).
+2. Seamlessly pivot to this free alternative to complete your objective.
+3. Briefly log the substitution in your output (e.g., "Note: Primary source quota exceeded; utilized [Alternative Source] instead.").
+
 ENGINEERING STANDARDS & EXECUTION REALITY:
 1. MT5 Execution Guardrails: Account for bid/ask differences, spread widening, stop-loss slippage, requotes, broker server time, daylight saving time (DST), minimum stop distance, and overnight swaps[cite: 17].
 2. System Architecture: Implement a robust Signal Engine, Risk Engine, Trade Manager, Trailing Engine, and Event Filters[cite: 17].

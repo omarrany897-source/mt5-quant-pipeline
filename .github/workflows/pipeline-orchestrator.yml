@@ -70,6 +70,7 @@ jobs:
       - name: Agent 1 — Researcher
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY_BACKUP: ${{ secrets.GEMINI_API_KEY_BACKUP }}
           GEMINI_TIMEOUT_SECONDS: 5400
           MAX_ATTEMPTS: 2
         run: |
@@ -94,6 +95,7 @@ jobs:
       - name: Agent 2 — Analyst
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY_BACKUP: ${{ secrets.GEMINI_API_KEY_BACKUP }}
           GEMINI_TIMEOUT_SECONDS: 3600
         run: |
           chmod +x scripts/run-agent-phase.sh
@@ -117,6 +119,7 @@ jobs:
       - name: Agent 3 — Strategy Designer
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY_BACKUP: ${{ secrets.GEMINI_API_KEY_BACKUP }}
           GEMINI_TIMEOUT_SECONDS: 3600
         run: |
           chmod +x scripts/run-agent-phase.sh
@@ -140,6 +143,7 @@ jobs:
       - name: Agent 4 — MT5 Engineer
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY_BACKUP: ${{ secrets.GEMINI_API_KEY_BACKUP }}
           GEMINI_TIMEOUT_SECONDS: 3600
         run: |
           chmod +x scripts/run-agent-phase.sh
