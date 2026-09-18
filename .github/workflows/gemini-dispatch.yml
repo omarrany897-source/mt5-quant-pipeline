@@ -1,0 +1,61 @@
+name: Gemini CLI Dispatch
+
+on:
+  issue_comment:
+    types: [created]
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  process-comment:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@gemini-cli')) ||
+      (github.event_name == 'issues' && contains(github.event.issue.body, '@gemini-cli'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Execute Gemini Action
+        uses: google-github-actions/run-gemini-cli@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          upload_artifacts: 'true'
+          prompt: |
+            ${{ github.event.comment.body || github.event.issue.body }}
+
+      - name: Commit agent outputs if changed
+        run: |
+          git config user.name "gemini-cli[bot]"
+          git config user.email "gemini-cli[bot]@users.noreply.github.com"
+          git add outputs/ Experts/ pipeline/state.json 2>/dev/null || true
+          if git diff --staged --quiet; then
+            echo "No output changes to commit."
+          else
+            git commit -m "chore: update pipeline outputs from @gemini-cli dispatch"
+            git push
+          fi
+
+  trigger-full-pipeline:
+    if: |
+      github.event_name == 'issue_comment' &&
+      contains(github.event.comment.body, '@gemini-cli') &&
+      contains(github.event.comment.body, '/run-pipeline')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger automated orchestrator
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run pipeline-orchestrator.yml \
+            --repo "${{ github.repository }}" \
+            --field trigger_source="issue_comment" \
+            --field issue_number="${{ github.event.issue.number }}"

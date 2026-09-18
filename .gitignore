@@ -1,0 +1,22 @@
+# Secrets
+.env
+*.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node (chartview subproject)
+node_modules/
+dist/
+
+# Gemini CLI local artifacts
+.gemini/
+gemini-artifacts/
+
+# IDE
+.vscode/
+.idea/
+
+# MT5 compile artifacts
+*.ex5
