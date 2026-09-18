@@ -58,6 +58,7 @@ jobs:
   phase-1-researcher:
     needs: setup
     runs-on: ubuntu-latest
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
         with:
@@ -70,6 +71,7 @@ jobs:
           GEMINI_CLI_TRUST_WORKSPACE: 'true'
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: 'gemini-2.0-flash'
           upload_artifacts: 'true'
           settings: '{"tools":{"core":["Read","Write","Shell","WebSearch","WebFetch"]}}'
           prompt: |
@@ -92,6 +94,7 @@ jobs:
   phase-2-analyst:
     needs: phase-1-researcher
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
         with:
@@ -104,6 +107,7 @@ jobs:
           GEMINI_CLI_TRUST_WORKSPACE: 'true'
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: 'gemini-2.0-flash'
           upload_artifacts: 'true'
           prompt: |
             Read outputs/01-researcher.md and prompts/02-analyst.md.
@@ -124,6 +128,7 @@ jobs:
   phase-3-strategy-designer:
     needs: phase-2-analyst
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
         with:
@@ -136,6 +141,7 @@ jobs:
           GEMINI_CLI_TRUST_WORKSPACE: 'true'
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: 'gemini-2.0-flash'
           upload_artifacts: 'true'
           prompt: |
             Read outputs/02-analyst.md and prompts/03-strategy-designer.md.
@@ -156,6 +162,7 @@ jobs:
   phase-4-mt5-engineer:
     needs: phase-3-strategy-designer
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
         with:
@@ -168,6 +175,7 @@ jobs:
           GEMINI_CLI_TRUST_WORKSPACE: 'true'
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: 'gemini-2.0-flash'
           upload_artifacts: 'true'
           prompt: |
             Read outputs/03-strategy-designer.md and prompts/04-mt5-engineer.md.
@@ -186,6 +194,7 @@ jobs:
   finalize:
     needs: [setup, phase-4-mt5-engineer]
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
