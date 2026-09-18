@@ -12,7 +12,6 @@ on:
         required: false
         default: ''
   schedule:
-    # Every Monday at 06:00 UTC — keeps the pipeline running automatically
     - cron: '0 6 * * 1'
   push:
     branches:
@@ -32,6 +31,7 @@ permissions:
 env:
   RUN_ID: ${{ github.run_id }}
   BRANCH_NAME: pipeline/run-${{ github.run_id }}
+  GEMINI_CLI_TRUST_WORKSPACE: 'true'
 
 jobs:
   setup:
@@ -40,6 +40,8 @@ jobs:
       branch: ${{ steps.branch.outputs.name }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create pipeline branch
         id: branch
@@ -63,33 +65,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.setup.outputs.branch }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Agent 1 — Researcher
-        uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GEMINI_CLI_TRUST_WORKSPACE: 'true'
-        with:
-          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          gemini_model: 'gemini-2.0-flash'
-          upload_artifacts: 'true'
-          settings: '{"tools":{"core":["Read","Write","Shell","WebSearch","WebFetch"]}}'
-          prompt: |
-            Read prompts/01-researcher.md and execute it exactly.
-            Conduct web searches for the literature review.
-            Write the complete deliverable to outputs/01-researcher.md.
-            Do not skip any required sections or tables.
-            Commit the output file to the current branch.
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          chmod +x scripts/run-agent-phase.sh
+          ./scripts/run-agent-phase.sh 01-researcher outputs/01-researcher.md
 
       - name: Commit Phase 1 output
         run: |
-          git config user.name "gemini-cli[bot]"
-          git config user.email "gemini-cli[bot]@users.noreply.github.com"
-          git add outputs/01-researcher.md pipeline/state.json
-          jq '.current_phase = "02-analyst"' pipeline/state.json > /tmp/state.json && mv /tmp/state.json pipeline/state.json
-          git add pipeline/state.json
-          git commit -m "feat(pipeline): phase 1 researcher output [run ${{ env.RUN_ID }}]" || echo "Nothing to commit"
-          git push
+          chmod +x scripts/commit-phase-output.sh
+          ./scripts/commit-phase-output.sh outputs/01-researcher.md 02-analyst ${{ env.RUN_ID }}
 
   phase-2-analyst:
     needs: phase-1-researcher
@@ -99,31 +87,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.setup.outputs.branch }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Agent 2 — Analyst
-        uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GEMINI_CLI_TRUST_WORKSPACE: 'true'
-        with:
-          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          gemini_model: 'gemini-2.0-flash'
-          upload_artifacts: 'true'
-          prompt: |
-            Read outputs/01-researcher.md and prompts/02-analyst.md.
-            Execute the triage protocol exactly.
-            Write the complete deliverable to outputs/02-analyst.md.
-            Commit the output file to the current branch.
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          chmod +x scripts/run-agent-phase.sh
+          ./scripts/run-agent-phase.sh 02-analyst outputs/02-analyst.md outputs/01-researcher.md
 
       - name: Commit Phase 2 output
         run: |
-          git config user.name "gemini-cli[bot]"
-          git config user.email "gemini-cli[bot]@users.noreply.github.com"
-          git add outputs/02-analyst.md pipeline/state.json
-          jq '.current_phase = "03-strategy-designer"' pipeline/state.json > /tmp/state.json && mv /tmp/state.json pipeline/state.json
-          git add pipeline/state.json
-          git commit -m "feat(pipeline): phase 2 analyst output [run ${{ env.RUN_ID }}]" || echo "Nothing to commit"
-          git push
+          chmod +x scripts/commit-phase-output.sh
+          ./scripts/commit-phase-output.sh outputs/02-analyst.md 03-strategy-designer ${{ env.RUN_ID }}
 
   phase-3-strategy-designer:
     needs: phase-2-analyst
@@ -133,31 +109,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.setup.outputs.branch }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Agent 3 — Strategy Designer
-        uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GEMINI_CLI_TRUST_WORKSPACE: 'true'
-        with:
-          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          gemini_model: 'gemini-2.0-flash'
-          upload_artifacts: 'true'
-          prompt: |
-            Read outputs/02-analyst.md and prompts/03-strategy-designer.md.
-            Formulate mathematical rules and pseudocode exactly as specified.
-            Write the complete deliverable to outputs/03-strategy-designer.md.
-            Commit the output file to the current branch.
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          chmod +x scripts/run-agent-phase.sh
+          ./scripts/run-agent-phase.sh 03-strategy-designer outputs/03-strategy-designer.md outputs/02-analyst.md
 
       - name: Commit Phase 3 output
         run: |
-          git config user.name "gemini-cli[bot]"
-          git config user.email "gemini-cli[bot]@users.noreply.github.com"
-          git add outputs/03-strategy-designer.md pipeline/state.json
-          jq '.current_phase = "04-mt5-engineer"' pipeline/state.json > /tmp/state.json && mv /tmp/state.json pipeline/state.json
-          git add pipeline/state.json
-          git commit -m "feat(pipeline): phase 3 strategy designer output [run ${{ env.RUN_ID }}]" || echo "Nothing to commit"
-          git push
+          chmod +x scripts/commit-phase-output.sh
+          ./scripts/commit-phase-output.sh outputs/03-strategy-designer.md 04-mt5-engineer ${{ env.RUN_ID }}
 
   phase-4-mt5-engineer:
     needs: phase-3-strategy-designer
@@ -167,29 +131,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.setup.outputs.branch }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Agent 4 — MT5 Engineer
-        uses: google-github-actions/run-gemini-cli@v0.1.22
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GEMINI_CLI_TRUST_WORKSPACE: 'true'
-        with:
-          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          gemini_model: 'gemini-2.0-flash'
-          upload_artifacts: 'true'
-          prompt: |
-            Read outputs/03-strategy-designer.md and prompts/04-mt5-engineer.md.
-            Write production-ready .mq5 Expert Advisors to the Experts/ directory.
-            Write the implementation roadmap and engineering notes to outputs/04-mt5-engineer.md.
-            Commit all generated files to the current branch.
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          chmod +x scripts/run-agent-phase.sh
+          ./scripts/run-agent-phase.sh 04-mt5-engineer outputs/04-mt5-engineer.md outputs/03-strategy-designer.md
 
       - name: Commit Phase 4 output
         run: |
-          git config user.name "gemini-cli[bot]"
-          git config user.email "gemini-cli[bot]@users.noreply.github.com"
-          git add outputs/04-mt5-engineer.md Experts/ pipeline/state.json
-          git commit -m "feat(pipeline): phase 4 MT5 engineer output [run ${{ env.RUN_ID }}]" || echo "Nothing to commit"
-          git push
+          chmod +x scripts/commit-phase-output.sh
+          ./scripts/commit-phase-output.sh outputs/04-mt5-engineer.md done ${{ env.RUN_ID }} "Experts/"
 
   finalize:
     needs: [setup, phase-4-mt5-engineer]
@@ -199,6 +153,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.setup.outputs.branch }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Consolidate final pipeline output
         run: |
@@ -232,30 +187,21 @@ jobs:
             --base main \
             --head "${{ needs.setup.outputs.branch }}" \
             --title "Pipeline Run ${{ env.RUN_ID }} — MT5 Research & EA Output" \
-            --body "$(cat <<'EOF'
-          ## Automated Pipeline Run
-
-          This PR contains the complete four-agent pipeline output:
+            --body "## Automated Pipeline Run
 
           | Phase | Output |
           |-------|--------|
-          | 1 — Researcher | `outputs/01-researcher.md` |
-          | 2 — Analyst | `outputs/02-analyst.md` |
-          | 3 — Strategy Designer | `outputs/03-strategy-designer.md` |
-          | 4 — MT5 Engineer | `outputs/04-mt5-engineer.md` + `Experts/*.mq5` |
-          | **Final** | **`outputs/final/latest.md`** |
+          | 1 — Researcher | \`outputs/01-researcher.md\` |
+          | 2 — Analyst | \`outputs/02-analyst.md\` |
+          | 3 — Strategy Designer | \`outputs/03-strategy-designer.md\` |
+          | 4 — MT5 Engineer | \`outputs/04-mt5-engineer.md\` + \`Experts/*.mq5\` |
+          | **Final** | **\`outputs/final/latest.md\`** |
 
-          Run ID: ${{ env.RUN_ID }}
-          Trigger: ${{ github.event_name }}
+          Run ID: ${{ env.RUN_ID }}" || echo "PR may already exist"
 
-          Merge to persist the final deliverables on `main`.
-          EOF
-          )" || echo "PR may already exist"
-
-      - name: Comment on source issue
-        if: github.event.inputs.issue_number != ''
+      - name: Comment on tracking issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh issue comment "${{ github.event.inputs.issue_number }}" \
-            --body "✅ Pipeline run \`${{ env.RUN_ID }}\` completed. Final output: \`outputs/final/latest.md\`. [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          gh issue comment 1 --repo omarrany897-source/mt5-quant-pipeline \
+            --body "✅ Pipeline run \`${{ env.RUN_ID }}\` completed. Final output: \`outputs/final/latest.md\`. [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" || true
