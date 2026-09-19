@@ -61,7 +61,10 @@ Do not use a preamble or omit required sections.
 For the 04-mt5-engineer phase, the response must include at least one complete compilable MQL5 Expert Advisor inside a fenced code block marked \`\`\`mql5. Include the exact target market symbol in the EA comments and filename guidance."
   ollama run "$OLLAMA_MODEL" "$ollama_prompt" > "$OUTPUT_FILE"
 
-  if [[ "$PHASE_ID" == "04-mt5-engineer" ]] && ! grep -Eq 'OnInit|OnTick|```(mql5|mq5)' "$OUTPUT_FILE"; then
+  if [[ "$PHASE_ID" == "04-mt5-engineer" ]] && {
+    [[ ! -s Experts/GeneratedStrategy.mq5 ]] ||
+    ! grep -Eq '\b(OnInit|OnTick)[[:space:]]*\(' Experts/GeneratedStrategy.mq5;
+  }; then
     mkdir -p Experts
     strategy="$(cat "${INPUT_FILES[0]}")"
     cat > /tmp/mt5-code-prompt.txt <<EOF
@@ -74,7 +77,7 @@ The code must contain OnInit() and OnTick(), use only standard MQL5 APIs, and in
 ${strategy}
 --- END SPECIFICATION ---
 EOF
-    ollama run "$OLLAMA_MODEL" "$(cat /tmp/mt5-code-prompt.txt)" > Experts/GeneratedStrategy.mq5
+    ollama run "$OLLAMA_MODEL" "$(cat /tmp/mt5-code-prompt.txt)" > Experts/GeneratedStrategy.mq5 || true
     if ! grep -Eq '\b(OnInit|OnTick)[[:space:]]*\(' Experts/GeneratedStrategy.mq5; then
       cat > Experts/GeneratedStrategy.mq5 <<'MQL5'
 #property strict
