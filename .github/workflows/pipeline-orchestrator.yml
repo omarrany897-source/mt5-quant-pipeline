@@ -64,7 +64,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.setup.outputs.branch }}
+          ref: ${{ env.BRANCH_NAME }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Agent 1 — Researcher
@@ -82,7 +82,7 @@ jobs:
       - name: Commit Phase 1 output
         run: |
           chmod +x scripts/commit-phase-output.sh
-          ./scripts/commit-phase-output.sh outputs/01-researcher.md 02-analyst ${{ env.RUN_ID }} "" "${{ needs.setup.outputs.branch }}"
+          ./scripts/commit-phase-output.sh outputs/01-researcher.md 02-analyst ${{ env.RUN_ID }} "" "${{ env.BRANCH_NAME }}"
 
   phase-2-analyst:
     needs: phase-1-researcher
@@ -91,7 +91,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.setup.outputs.branch }}
+          ref: ${{ env.BRANCH_NAME }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Agent 2 — Analyst
@@ -108,7 +108,7 @@ jobs:
       - name: Commit Phase 2 output
         run: |
           chmod +x scripts/commit-phase-output.sh
-          ./scripts/commit-phase-output.sh outputs/02-analyst.md 03-strategy-designer ${{ env.RUN_ID }} "" "${{ needs.setup.outputs.branch }}"
+          ./scripts/commit-phase-output.sh outputs/02-analyst.md 03-strategy-designer ${{ env.RUN_ID }} "" "${{ env.BRANCH_NAME }}"
 
   phase-3-strategy-designer:
     needs: phase-2-analyst
@@ -117,7 +117,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.setup.outputs.branch }}
+          ref: ${{ env.BRANCH_NAME }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Agent 3 — Strategy Designer
@@ -134,7 +134,7 @@ jobs:
       - name: Commit Phase 3 output
         run: |
           chmod +x scripts/commit-phase-output.sh
-          ./scripts/commit-phase-output.sh outputs/03-strategy-designer.md 04-mt5-engineer ${{ env.RUN_ID }} "" "${{ needs.setup.outputs.branch }}"
+          ./scripts/commit-phase-output.sh outputs/03-strategy-designer.md 04-mt5-engineer ${{ env.RUN_ID }} "" "${{ env.BRANCH_NAME }}"
 
   phase-4-mt5-engineer:
     needs: phase-3-strategy-designer
@@ -143,7 +143,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.setup.outputs.branch }}
+          ref: ${{ env.BRANCH_NAME }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Agent 4 — MT5 Engineer
@@ -160,7 +160,7 @@ jobs:
       - name: Commit Phase 4 output
         run: |
           chmod +x scripts/commit-phase-output.sh
-          ./scripts/commit-phase-output.sh outputs/04-mt5-engineer.md done ${{ env.RUN_ID }} "Experts/" "${{ needs.setup.outputs.branch }}"
+          ./scripts/commit-phase-output.sh outputs/04-mt5-engineer.md done ${{ env.RUN_ID }} "Experts/" "${{ env.BRANCH_NAME }}"
 
   finalize:
     needs: [setup, phase-4-mt5-engineer]
@@ -169,7 +169,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.setup.outputs.branch }}
+          ref: ${{ env.BRANCH_NAME }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Consolidate final pipeline output
@@ -186,7 +186,7 @@ jobs:
             echo "Nothing new to commit."
           else
             git commit -m "feat(pipeline): final consolidated output [run ${{ env.RUN_ID }}]"
-            git push origin "HEAD:${{ needs.setup.outputs.branch }}"
+            git push origin "HEAD:${{ env.BRANCH_NAME }}"
           fi
 
       - name: Upload final output artifact

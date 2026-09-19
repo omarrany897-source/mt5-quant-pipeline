@@ -21,6 +21,9 @@ fi
 git config user.name "gemini-cli[bot]"
 git config user.email "gemini-cli[bot]@users.noreply.github.com"
 
+git fetch origin "$PIPELINE_BRANCH"
+git rebase "origin/${PIPELINE_BRANCH}"
+
 jq --arg phase "$NEXT_PHASE" '.current_phase = $phase' pipeline/state.json > /tmp/state.json
 mv /tmp/state.json pipeline/state.json
 
