@@ -71,6 +71,8 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_API_KEY_BACKUP: ${{ secrets.GEMINI_API_KEY_BACKUP }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OLLAMA_FALLBACK_ENABLED: true
           OLLAMA_MODEL: qwen2.5:3b
           GEMINI_TIMEOUT_SECONDS: 300
@@ -98,6 +100,8 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_API_KEY_BACKUP: ${{ secrets.GEMINI_API_KEY_BACKUP }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OLLAMA_FALLBACK_ENABLED: true
           OLLAMA_MODEL: qwen2.5:3b
           GEMINI_TIMEOUT_SECONDS: 3600
@@ -124,6 +128,8 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_API_KEY_BACKUP: ${{ secrets.GEMINI_API_KEY_BACKUP }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OLLAMA_FALLBACK_ENABLED: true
           OLLAMA_MODEL: qwen2.5:3b
           GEMINI_TIMEOUT_SECONDS: 3600
@@ -150,6 +156,8 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_API_KEY_BACKUP: ${{ secrets.GEMINI_API_KEY_BACKUP }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OLLAMA_FALLBACK_ENABLED: true
           OLLAMA_MODEL: qwen2.5:1.5b
           GEMINI_TIMEOUT_SECONDS: 3600

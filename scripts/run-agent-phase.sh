@@ -10,6 +10,10 @@ MAX_ATTEMPTS="${MAX_ATTEMPTS:-3}"
 GEMINI_INSTALL_TIMEOUT_SECONDS="${GEMINI_INSTALL_TIMEOUT_SECONDS:-600}"
 GEMINI_TIMEOUT_SECONDS="${GEMINI_TIMEOUT_SECONDS:-1800}"
 BACKUP_API_KEY="${GEMINI_API_KEY_BACKUP:-}"
+OPENROUTER_API_KEY="${OPENROUTER_API_KEY:-}"
+GROQ_API_KEY="${GROQ_API_KEY:-}"
+OPENROUTER_MODEL="${OPENROUTER_MODEL:-openrouter/free}"
+GROQ_MODEL="${GROQ_MODEL:-llama-3.3-70b-versatile}"
 OLLAMA_FALLBACK_ENABLED="${OLLAMA_FALLBACK_ENABLED:-true}"
 OLLAMA_MODEL="${OLLAMA_MODEL:-qwen2.5:3b}"
 
@@ -116,6 +120,22 @@ bool InTradingWindow()
    return current >= start || current < end;
 }
 
+run_openai_compatible_fallback() {
+  local api_key="$1"
+  local base_url="$2"
+  local model="$3"
+  [[ -n "$api_key" ]] || return 1
+  local prompt_json
+  prompt_json="$(jq -Rn --arg p "$PROMPT" '$p')"
+  curl -fsS --max-time "$GEMINI_TIMEOUT_SECONDS" \
+    -H "Authorization: Bearer ${api_key}" \
+    -H "Content-Type: application/json" \
+    -d "{\"model\":\"${model}\",\"messages\":[{\"role\":\"user\",\"content\":${prompt_json}}],\"temperature\":0.2}" \
+    "${base_url}/chat/completions" \
+    | jq -r '.choices[0].message.content // empty' > "$OUTPUT_FILE"
+  [[ -s "$OUTPUT_FILE" ]]
+}
+
 int OnInit()
 {
    trade.SetExpertMagicNumber(InpMagicNumber);
@@ -219,6 +239,26 @@ for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
       fi
     else
       echo "Backup Gemini key also failed."
+    fi
+  fi
+
+  if [[ -n "$OPENROUTER_API_KEY" ]]; then
+    echo "Trying OpenRouter free fallback."
+    if run_openai_compatible_fallback "$OPENROUTER_API_KEY" "https://openrouter.ai/api/v1" "$OPENROUTER_MODEL"; then
+      echo "Success with OpenRouter fallback: ${OUTPUT_FILE} ($(wc -c < "$OUTPUT_FILE") bytes)"
+      if [[ "$PHASE_ID" != "04-mt5-engineer" || -d Experts && -n "$(find Experts -maxdepth 1 -type f -name '*.mq5' -print -quit)" || grep -Eq '\b(OnInit|OnTick)[[:space:]]*\(' "$OUTPUT_FILE" ]]; then
+        exit 0
+      fi
+    fi
+  fi
+
+  if [[ -n "$GROQ_API_KEY" ]]; then
+    echo "Trying Groq fallback."
+    if run_openai_compatible_fallback "$GROQ_API_KEY" "https://api.groq.com/openai/v1" "$GROQ_MODEL"; then
+      echo "Success with Groq fallback: ${OUTPUT_FILE} ($(wc -c < "$OUTPUT_FILE") bytes)"
+      if [[ "$PHASE_ID" != "04-mt5-engineer" || -d Experts && -n "$(find Experts -maxdepth 1 -type f -name '*.mq5' -print -quit)" || grep -Eq '\b(OnInit|OnTick)[[:space:]]*\(' "$OUTPUT_FILE" ]]; then
+        exit 0
+      fi
     fi
   fi
 
