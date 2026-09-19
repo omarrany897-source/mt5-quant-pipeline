@@ -1,7 +1,7 @@
 {
   "version": 1,
   "status": "running",
-  "current_phase": "04-mt5-engineer",
+  "current_phase": "done",
   "last_run_id": "35433050215",
   "last_completed_at": null,
   "last_final_output": null,
