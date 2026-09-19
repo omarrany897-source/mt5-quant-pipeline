@@ -47,7 +47,8 @@ $(cat "$input")
   ollama_prompt="${ollama_prompt}
 
 You cannot call tools. Return only the complete contents for ${OUTPUT_FILE}.
-Do not use a preamble or omit required sections."
+Do not use a preamble or omit required sections.
+For the 04-mt5-engineer phase, the response must include at least one complete compilable MQL5 Expert Advisor inside a fenced code block marked \`\`\`mql5. Include the exact target market symbol in the EA comments and filename guidance."
   ollama run "$OLLAMA_MODEL" "$ollama_prompt" > "$OUTPUT_FILE"
 }
 
