@@ -21,13 +21,27 @@ fi
 git config user.name "gemini-cli[bot]"
 git config user.email "gemini-cli[bot]@users.noreply.github.com"
 
+STASH_BEFORE="$(git rev-parse -q --verify refs/stash || true)"
+git stash push --include-untracked -m "pipeline output before branch rebase" >/dev/null || true
+STASH_AFTER="$(git rev-parse -q --verify refs/stash || true)"
+git fetch origin "$PIPELINE_BRANCH"
+git rebase "origin/${PIPELINE_BRANCH}"
+if [[ "$STASH_AFTER" != "$STASH_BEFORE" ]]; then
+  git stash pop
+fi
+
 jq --arg phase "$NEXT_PHASE" '.current_phase = $phase' pipeline/state.json > /tmp/state.json
 mv /tmp/state.json pipeline/state.json
 
 git add "$OUTPUT_FILE" pipeline/state.json
 if [[ -n "$EXTRA_PATHS" ]]; then
-  # shellcheck disable=SC2086
-  git add $EXTRA_PATHS
+  for extra_path in $EXTRA_PATHS; do
+    if [[ -e "$extra_path" ]]; then
+      git add "$extra_path"
+    else
+      echo "Optional path not present; continuing: $extra_path"
+    fi
+  done
 fi
 git add pipeline/state.json
 

@@ -9,6 +9,15 @@ If you encounter a paywall, API quota exhaustion, or access denial for any requi
 2. Seamlessly pivot to this free alternative to complete your objective.
 3. Briefly log the substitution in your output (e.g., "Note: Primary source quota exceeded; utilized [Alternative Source] instead.").
 
+AUTONOMOUS ERROR RECOVERY & AUTO-FIX PROTOCOL:
+If execution encounters a build error, runtime exception, script failure, syntax bug, or missing dependency:
+1. Read the full error log, line number, and relevant code context.
+2. Isolate the root cause rather than masking the failure.
+3. Apply a direct source, workflow, or configuration fix.
+4. Commit with `fix(auto-heal): resolve [brief error description] and re-trigger`.
+5. Re-run the failed check or phase to verify the fix.
+6. Allow no more than 3 fix iterations before escalating with a clear error report.
+
 EVALUATION & FILTERING PROTOCOL:
 1. MT5 Feasibility Filter: Rate implementation complexity as Very Easy, Easy, Moderate, Difficult, or Very Difficult[cite: 17]. Prioritize retail implementability (standard OHLCV/tick data, standard indicators). Reject candidates requiring proprietary order flow or expensive alternative data[cite: 17].
 2. Zero-Discretion Audit: Reject or heavily penalize strategies requiring visual interpretation (e.g., "looks like a strong trend", "clean market structure", "beautiful candle")[cite: 17].

@@ -1,0 +1,73 @@
+name: Auto-Heal & Auto-Retry
+
+on:
+  workflow_run:
+    workflows: ["Pipeline Orchestrator"]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  auto-fix-and-retry:
+    if: >
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.run_attempt < 3 &&
+      github.event.workflow_run.head_branch != 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout failed branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Capture failure metadata
+        id: failure
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          gh run view "$RUN_ID" --json jobs,headBranch,headSha \
+            > "$RUNNER_TEMP/failure.json"
+          gh run view "$RUN_ID" --log > "$RUNNER_TEMP/failure.log"
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+          echo "branch=${{ github.event.workflow_run.head_branch }}" >> "$GITHUB_OUTPUT"
+
+      - name: Diagnose and repair with Gemini
+        id: repair
+        uses: google-github-actions/run-gemini-cli@v0.1.22
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          upload_artifacts: 'true'
+          prompt: |
+            AUTONOMOUS AUTO-FIX MODE.
+            Failed Pipeline Orchestrator run: ${{ steps.failure.outputs.run_id }}.
+            Read `${{ runner.temp }}/failure.json` and `${{ runner.temp }}/failure.log`,
+            then inspect the repository and failed logs.
+            Diagnose the root cause, apply the smallest direct fix, and validate it.
+            Do not fabricate outputs or disable checks. Commit and push to the current
+            branch with:
+            fix(auto-heal): resolve [brief error description] and re-trigger
+            Stop after one repair iteration.
+
+      - name: Retry failed workflow after repair
+        if: steps.repair.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ steps.failure.outputs.run_id }}
+        run: gh run rerun "$RUN_ID" --failed
+
+      - name: Report unavailable repair
+        if: steps.repair.outcome != 'success'
+        run: |
+          echo "::error::Auto-heal could not apply a verified repair."
+          exit 1

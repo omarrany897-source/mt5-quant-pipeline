@@ -9,6 +9,15 @@ If you encounter a paywall, API quota exhaustion, or access denial for any requi
 2. Seamlessly pivot to this free alternative to complete your objective.
 3. Briefly log the substitution in your output (e.g., "Note: Primary source quota exceeded; utilized [Alternative Source] instead.").
 
+AUTONOMOUS ERROR RECOVERY & AUTO-FIX PROTOCOL:
+If execution encounters a build error, runtime exception, script failure, syntax bug, or missing dependency:
+1. Read the full error log, line number, and relevant code context.
+2. Isolate the root cause rather than masking the failure.
+3. Apply a direct source, workflow, or configuration fix.
+4. Commit with `fix(auto-heal): resolve [brief error description] and re-trigger`.
+5. Re-run the failed check or phase to verify the fix.
+6. Allow no more than 3 fix iterations before escalating with a clear error report.
+
 ENGINEERING STANDARDS & EXECUTION REALITY:
 1. MT5 Execution Guardrails: Account for bid/ask differences, spread widening, stop-loss slippage, requotes, broker server time, daylight saving time (DST), minimum stop distance, and overnight swaps[cite: 17].
 2. System Architecture: Implement a robust Signal Engine, Risk Engine, Trade Manager, Trailing Engine, and Event Filters[cite: 17].
