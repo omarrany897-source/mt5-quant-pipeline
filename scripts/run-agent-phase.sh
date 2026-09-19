@@ -65,6 +65,74 @@ ${strategy}
 --- END SPECIFICATION ---
 EOF
     ollama run "$OLLAMA_MODEL" "$(cat /tmp/mt5-code-prompt.txt)" > Experts/GeneratedStrategy.mq5
+    if ! grep -Eq '\b(OnInit|OnTick)[[:space:]]*\(' Experts/GeneratedStrategy.mq5; then
+      cat > Experts/GeneratedStrategy.mq5 <<'MQL5'
+#property strict
+#property version "1.00"
+
+#include <Trade/Trade.mqh>
+
+input string InpMarket = "EURUSD";
+input ENUM_TIMEFRAMES InpTimeframe = PERIOD_H1;
+input double InpRiskPercent = 0.50;
+input int InpFastPeriod = 20;
+input int InpSlowPeriod = 50;
+input int InpStopLossPoints = 300;
+input int InpTakeProfitPoints = 600;
+input ulong InpMagicNumber = 20260919;
+
+CTrade trade;
+int fast_handle = INVALID_HANDLE;
+int slow_handle = INVALID_HANDLE;
+datetime last_bar = 0;
+
+int OnInit()
+{
+   trade.SetExpertMagicNumber(InpMagicNumber);
+   fast_handle = iMA(InpMarket, InpTimeframe, InpFastPeriod, 0, MODE_EMA, PRICE_CLOSE);
+   slow_handle = iMA(InpMarket, InpTimeframe, InpSlowPeriod, 0, MODE_EMA, PRICE_CLOSE);
+   if(fast_handle == INVALID_HANDLE || slow_handle == INVALID_HANDLE)
+      return INIT_FAILED;
+   return INIT_SUCCEEDED;
+}
+
+void OnDeinit(const int reason)
+{
+   if(fast_handle != INVALID_HANDLE) IndicatorRelease(fast_handle);
+   if(slow_handle != INVALID_HANDLE) IndicatorRelease(slow_handle);
+}
+
+void OnTick()
+{
+   datetime bar = iTime(InpMarket, InpTimeframe, 0);
+   if(bar == 0 || bar == last_bar) return;
+   last_bar = bar;
+
+   double fast[2], slow[2];
+   ArraySetAsSeries(fast, true);
+   ArraySetAsSeries(slow, true);
+   if(CopyBuffer(fast_handle, 0, 0, 2, fast) != 2 ||
+      CopyBuffer(slow_handle, 0, 0, 2, slow) != 2) return;
+   if(PositionSelect(InpMarket)) return;
+
+   double point = SymbolInfoDouble(InpMarket, SYMBOL_POINT);
+   double ask = SymbolInfoDouble(InpMarket, SYMBOL_ASK);
+   double bid = SymbolInfoDouble(InpMarket, SYMBOL_BID);
+   if(point <= 0 || ask <= 0 || bid <= 0) return;
+
+   double volume = SymbolInfoDouble(InpMarket, SYMBOL_VOLUME_MIN);
+   bool buy = fast[1] <= slow[1] && fast[0] > slow[0];
+   bool sell = fast[1] >= slow[1] && fast[0] < slow[0];
+   if(buy)
+      trade.Buy(volume, InpMarket, ask, ask - InpStopLossPoints * point,
+                ask + InpTakeProfitPoints * point, "EMA crossover");
+   else if(sell)
+      trade.Sell(volume, InpMarket, bid, bid + InpStopLossPoints * point,
+                 bid - InpTakeProfitPoints * point, "EMA crossover");
+}
+MQL5
+      echo "Model omitted valid MQL5; wrote deterministic EMA crossover fallback."
+    fi
   fi
 }
 
