@@ -185,7 +185,7 @@ $(cat pipeline_troubleshooting_log.md)
 Do not repeat any failed approach listed in the ledger. The EA artifact gate is
 mandatory even if the narrative report is complete."
   fi
-  for input in "prompts/${PHASE_ID}.md" "${INPUT_FILES[@]}"; do
+  for input in "prompts/${PHASE_ID}.md" "strategy_vault.md" "pipeline_troubleshooting_log.md" "${INPUT_FILES[@]}"; do
     if [[ -n "$input" && -f "$input" ]]; then
       ollama_prompt="${ollama_prompt}
 
@@ -237,6 +237,10 @@ for input in "${INPUT_FILES[@]}"; do
     PROMPT="${PROMPT} Read ${input}."
   fi
 done
+
+if [[ "$PHASE_ID" == "04-mt5-engineer" ]]; then
+  PROMPT="${PROMPT} Read strategy_vault.md and pipeline_troubleshooting_log.md before proposing the two-sentence hypothesis. If the prior candidate failed, pivot to a distinct market mechanism and do not repeat its entry branch."
+fi
 
 PROMPT="${PROMPT}
 

@@ -91,6 +91,22 @@ candidate rather than promoted as a finished strategy. Do not "fix" this by
 starving the signal; change the market mechanism or test a directionally
 distinct hypothesis.
 
+## Infinite Quant Engine operating rules
+
+`strategy_vault.md` is the success vault. It must be read before each Phase 4
+generation. Only strategies exceeding PF 1.30, Sharpe 1.20, positive
+expectancy, and 100+ annual trades may enter it. A successful strategy must
+record its complete mathematical DNA, regime tag, timeframe, risk settings,
+symbols, and out-of-sample metrics; future candidates must transfer, combine,
+or mutate a vaulted strategy.
+
+Every failure must identify whether it was starvation or negative edge, ban
+the failed parameter combination, and pivot to an untested mechanism. Basic
+RSI/MACD crossover combinations are prohibited. Every candidate needs a
+two-sentence market-mechanics hypothesis before code generation, dynamic ATR
+or standard-deviation thresholds, configurable session hours, explicit
+`SYMBOL_SPREAD` protection, and deterministic market/version naming.
+
 ## Current deterministic approach
 
 The pipeline now:
