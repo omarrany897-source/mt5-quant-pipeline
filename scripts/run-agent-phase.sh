@@ -88,6 +88,10 @@ EOF
 input string InpMarket = "EURUSD";
 input ENUM_TIMEFRAMES InpTimeframe = PERIOD_H1;
 input double InpRiskPercent = 0.50;
+input int Start_Hour = 8;
+input int Start_Minute = 0;
+input int End_Hour = 16;
+input int End_Minute = 0;
 input int InpFastPeriod = 20;
 input int InpSlowPeriod = 50;
 input int InpStopLossPoints = 300;
@@ -98,6 +102,17 @@ CTrade trade;
 int fast_handle = INVALID_HANDLE;
 int slow_handle = INVALID_HANDLE;
 datetime last_bar = 0;
+
+bool InTradingWindow()
+{
+   MqlDateTime now;
+   TimeToStruct(TimeCurrent(), now);
+   int current = now.hour * 60 + now.min;
+   int start = Start_Hour * 60 + Start_Minute;
+   int end = End_Hour * 60 + End_Minute;
+   if(start <= end) return current >= start && current < end;
+   return current >= start || current < end;
+}
 
 int OnInit()
 {
@@ -117,6 +132,7 @@ void OnDeinit(const int reason)
 
 void OnTick()
 {
+   if(!InTradingWindow()) return;
    datetime bar = iTime(InpMarket, InpTimeframe, 0);
    if(bar == 0 || bar == last_bar) return;
    last_bar = bar;
