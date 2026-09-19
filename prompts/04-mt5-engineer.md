@@ -68,6 +68,10 @@ DELIVERABLES:
    - If uncertain, emit a minimal known-good EMA crossover EA with audited risk
      controls instead of prose or broken syntax.
 5. Every new strategy must satisfy the research guardrails:
+   - Before writing any code, include exactly two sentences defending the
+     market mechanism and why it should have an edge. A list of indicators is
+     not a defense.
+   - Never use three or more lagging indicators that must align perfectly.
    - Entries must use dynamic price action or market structure; a calendar,
      fixed weekday, fixed interval, or new-bar check alone is never a signal.
    - Volatility thresholds must be ATR- or standard-deviation-normalized.
@@ -76,6 +80,9 @@ DELIVERABLES:
    - Stop and target distances must enforce risk-to-reward of at least 1:1.5.
    - M5/M15 designs must target approximately 120-300 trades per active symbol
      per year; report the expected frequency and reject cloned fixed-count logic.
+   - Never hardcode pip distances, fixed trade intervals, or static thresholds;
+     derive thresholds from ATR or standard deviation and expose periods as
+     inputs.
 6. Structure the report as: **Phase 1 — Hypothesis** (edge and whether a
    time window is justified), **Phase 2 — Code** (complete MQL5 source), and
    **Phase 3 — Edge Cases** (conditions where the EA can fail). The code is

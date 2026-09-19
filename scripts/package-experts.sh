@@ -27,7 +27,7 @@ write_known_good_fallback() {
   local dir="$1"
   mkdir -p "$dir"
   local dynamic_fallback
-  dynamic_fallback="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/Experts/EURUSD_2.mq5"
+  dynamic_fallback="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/Experts/EURUSD_3.mq5"
   if [[ -s "$dynamic_fallback" ]]; then
     cp "$dynamic_fallback" "$dir/GeneratedFallback.mq5"
     return 0

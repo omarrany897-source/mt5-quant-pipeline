@@ -37,6 +37,44 @@ Mandatory prevention rules:
 5. The packaging and compile gates must reject source that lacks ATR/volatility,
    spread, and reward/risk logic for a new dynamic strategy.
 
+## Pattern #2: Pendulum Effect — Goldilocks Generation Rules
+
+V1 was too loose/static: a cloned trigger produced approximately 44 trades per
+year on every asset. V2 was too restrictive/over-constrained: conflicting
+filters reduced the sample to 13-18 trades per year and produced a flat -5.00
+Sharpe result. This is the Pendulum Effect; future versions must stay between
+those extremes.
+
+The following parameters are permanent workspace rules for EURUSD_3 and every
+future EA:
+
+1. The Statistical Viability Check:
+   - Never generate an EA whose logic relies on 3 or more lagging indicators
+     needing to align perfectly. This guarantees trade starvation in live
+     markets.
+   - Future EAs must target a healthy statistical sample size (e.g., 100-300
+     trades per year per asset on intraday timeframes).
+2. The "Why Does This Work?" Pre-Flight Check:
+   - Before writing code for any future EA, write a 2-sentence logical defense
+     of the statistical edge.
+   - A list of indicators is not an edge; the defense must describe a testable
+     market mechanism such as range expansion, liquidity sweep, or session
+     momentum.
+3. Zero-Hardcoding Policy:
+   - Never hardcode fixed pip values, fixed trade intervals, or static indicator
+     thresholds. Every threshold must adapt dynamically to the asset's
+     volatility, such as a multiple of the selected ATR.
+
+EURUSD_3 pre-flight defense: It exploits short-horizon range expansion by
+entering only when a closed M15 candle breaks the recent structure range by an
+ATR-scaled buffer. It rejects expensive execution conditions and uses an
+ATR-scaled stop with a minimum 1.5R target, preserving a meaningful but
+non-starved signal population without stacking lagging indicators.
+
+Expected frequency is a target, not a guarantee: validate each symbol with
+out-of-sample testing and reject runs that collapse below the 100-300 annual
+trade objective without a documented market-specific reason.
+
 ## Current deterministic approach
 
 The pipeline now:
