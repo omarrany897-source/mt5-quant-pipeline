@@ -34,6 +34,7 @@ jobs:
         run: |
           gh run view "$RUN_ID" --json jobs,headBranch,headSha \
             > "$RUNNER_TEMP/failure.json"
+          gh run view "$RUN_ID" --log > "$RUNNER_TEMP/failure.log"
           echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
           echo "branch=${{ github.event.workflow_run.head_branch }}" >> "$GITHUB_OUTPUT"
 
@@ -50,7 +51,8 @@ jobs:
           prompt: |
             AUTONOMOUS AUTO-FIX MODE.
             Failed Pipeline Orchestrator run: ${{ steps.failure.outputs.run_id }}.
-            Read $RUNNER_TEMP/failure.json and inspect the repository and failed logs.
+            Read `${{ runner.temp }}/failure.json` and `${{ runner.temp }}/failure.log`,
+            then inspect the repository and failed logs.
             Diagnose the root cause, apply the smallest direct fix, and validate it.
             Do not fabricate outputs or disable checks. Commit and push to the current
             branch with:
