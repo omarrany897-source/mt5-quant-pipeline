@@ -255,6 +255,7 @@ jobs:
         env:
           MT5_EXPERTS_DIR: 'C:\Users\Laptop\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\MQL5\Experts'
           MT5_ARCHIVE_DIR: 'C:\Users\Laptop\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\MQL5\Experts\PipelineOutputs'
+          DOWNLOADS_DIR: 'C:\Users\Laptop\Downloads'
         run: |
           $source = Join-Path $env:GITHUB_WORKSPACE 'Experts'
           if (-not (Test-Path $source)) {
@@ -265,6 +266,7 @@ jobs:
           throw "No .mq5 files were produced by the completed pipeline."
           }
           New-Item -ItemType Directory -Force -Path $env:MT5_EXPERTS_DIR | Out-Null
+          New-Item -ItemType Directory -Force -Path $env:DOWNLOADS_DIR | Out-Null
           $archivedEAs = @(Get-ChildItem -Path $env:MT5_ARCHIVE_DIR -Recurse -Filter '*.mq5' -File -ErrorAction SilentlyContinue)
           foreach ($archived in $archivedEAs) {
           $archivedDestination = Join-Path $env:MT5_EXPERTS_DIR $archived.Name
@@ -295,6 +297,18 @@ jobs:
           Copy-Item -Path (Join-Path $env:GITHUB_WORKSPACE 'outputs') -Destination $runArchive -Recurse -Force
           Copy-Item -Path $source -Destination $runArchive -Recurse -Force
           Write-Host "Archived complete run output to $runArchive"
+          $downloaded = @()
+          Get-ChildItem -Path $env:MT5_EXPERTS_DIR -Filter '*.mq5' -File | ForEach-Object {
+            $downloadDestination = Join-Path $env:DOWNLOADS_DIR $_.Name
+            if (-not (Test-Path $downloadDestination)) {
+              Copy-Item -LiteralPath $_.FullName -Destination $downloadDestination
+              $downloaded += $_.Name
+              Write-Host "Copied $($_.Name) to $env:DOWNLOADS_DIR"
+            }
+          }
+          if ($downloaded.Count -eq 0) {
+            Write-Host "All pipeline EAs already exist in $env:DOWNLOADS_DIR"
+          }
           $installed = @(Get-ChildItem -Path $env:MT5_EXPERTS_DIR -Filter '*.mq5' -File |
             Where-Object { $_.LastWriteTime -ge (Get-Date).AddMinutes(-10) } |
             Select-Object -ExpandProperty Name)
