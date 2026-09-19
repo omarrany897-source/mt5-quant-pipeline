@@ -107,6 +107,25 @@ Trigger each phase individually by opening a GitHub Issue with the exact body te
 - **Live logs:** GitHub Actions → Pipeline Orchestrator
 - **Final answer:** `outputs/final/latest.md` after merge
 
+### Email notification after local EA installation
+
+The self-hosted installation job sends an email after it successfully copies a
+versioned `.mq5` file into the local MetaTrader 5 `Experts` directory. Add
+these repository secrets under **Settings → Secrets and variables → Actions**:
+
+| Secret | Value |
+|---|---|
+| `SMTP_SERVER` | SMTP hostname, such as `smtp.gmail.com` |
+| `SMTP_PORT` | TLS SMTP port, normally `587` |
+| `SMTP_USERNAME` | SMTP account/from address |
+| `SMTP_PASSWORD` | SMTP password or provider app password |
+| `EA_NOTIFY_TO` | Address that should receive EA notifications |
+
+The email includes the installed filename, local destination, run ID, and a
+link to the GitHub Actions run. If these secrets are not configured, the EA
+installation still succeeds and the workflow logs a warning instead of
+exposing credentials or falsely claiming that an email was sent.
+
 ### Forced Free-Alternative Recovery
 
 To force an agent to replace a paid or unavailable source, comment this on the tracking issue:

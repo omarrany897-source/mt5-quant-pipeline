@@ -287,3 +287,45 @@ jobs:
           Copy-Item -Path (Join-Path $env:GITHUB_WORKSPACE 'outputs') -Destination $runArchive -Recurse -Force
           Copy-Item -Path $source -Destination $runArchive -Recurse -Force
           Write-Host "Archived complete run output to $runArchive"
+          $installed = @(Get-ChildItem -Path $env:MT5_EXPERTS_DIR -Filter '*.mq5' -File |
+            Where-Object { $_.LastWriteTime -ge (Get-Date).AddMinutes(-10) } |
+            Select-Object -ExpandProperty Name)
+          if ($installed.Count -eq 0) {
+            throw "Local installation completed without a recently written EA file."
+          }
+          @(
+            "EA installation succeeded."
+            "Run ID: ${{ env.RUN_ID }}"
+            "Installed file(s): $($installed -join ', ')"
+            "Destination: $env:MT5_EXPERTS_DIR"
+            "Workflow: $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
+          ) | Set-Content -Path (Join-Path $env:GITHUB_WORKSPACE 'ea-install-summary.txt') -Encoding UTF8
+
+      - name: Email EA installation notification
+        if: success()
+        shell: powershell
+        env:
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          EA_NOTIFY_TO: ${{ secrets.EA_NOTIFY_TO }}
+        run: |
+          $required = @('SMTP_SERVER', 'SMTP_PORT', 'SMTP_USERNAME', 'SMTP_PASSWORD', 'EA_NOTIFY_TO')
+          $missing = @($required | Where-Object { [string]::IsNullOrWhiteSpace((Get-Item "Env:$_").Value) })
+          if ($missing.Count -gt 0) {
+            Write-Warning "EA email notification skipped; configure repository secrets: $($missing -join ', ')"
+            exit 0
+          }
+          $securePassword = ConvertTo-SecureString $env:SMTP_PASSWORD -AsPlainText -Force
+          $credential = New-Object System.Management.Automation.PSCredential ($env:SMTP_USERNAME, $securePassword)
+          $summary = Get-Content (Join-Path $env:GITHUB_WORKSPACE 'ea-install-summary.txt') -Raw
+          Send-MailMessage `
+            -SmtpServer $env:SMTP_SERVER `
+            -Port ([int]$env:SMTP_PORT) `
+            -UseSsl `
+            -Credential $credential `
+            -From $env:SMTP_USERNAME `
+            -To $env:EA_NOTIFY_TO `
+            -Subject "MT5 EA installed successfully: run ${{ env.RUN_ID }}" `
+            -Body $summary
