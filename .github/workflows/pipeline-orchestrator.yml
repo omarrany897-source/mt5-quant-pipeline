@@ -104,7 +104,8 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OLLAMA_FALLBACK_ENABLED: true
           OLLAMA_MODEL: qwen2.5:3b
-          GEMINI_TIMEOUT_SECONDS: 3600
+          GEMINI_TIMEOUT_SECONDS: 300
+          MAX_ATTEMPTS: 1
         run: |
           chmod +x scripts/run-agent-phase.sh
           ./scripts/run-agent-phase.sh 02-analyst outputs/02-analyst.md outputs/01-researcher.md
@@ -132,7 +133,8 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OLLAMA_FALLBACK_ENABLED: true
           OLLAMA_MODEL: qwen2.5:3b
-          GEMINI_TIMEOUT_SECONDS: 3600
+          GEMINI_TIMEOUT_SECONDS: 300
+          MAX_ATTEMPTS: 1
         run: |
           chmod +x scripts/run-agent-phase.sh
           ./scripts/run-agent-phase.sh 03-strategy-designer outputs/03-strategy-designer.md outputs/02-analyst.md
@@ -160,7 +162,8 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OLLAMA_FALLBACK_ENABLED: true
           OLLAMA_MODEL: qwen2.5:1.5b
-          GEMINI_TIMEOUT_SECONDS: 3600
+          GEMINI_TIMEOUT_SECONDS: 300
+          MAX_ATTEMPTS: 1
         run: |
           chmod +x scripts/run-agent-phase.sh
           ./scripts/run-agent-phase.sh 04-mt5-engineer outputs/04-mt5-engineer.md outputs/03-strategy-designer.md
