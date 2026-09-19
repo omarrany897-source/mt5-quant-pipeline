@@ -35,8 +35,13 @@ mv /tmp/state.json pipeline/state.json
 
 git add "$OUTPUT_FILE" pipeline/state.json
 if [[ -n "$EXTRA_PATHS" ]]; then
-  # shellcheck disable=SC2086
-  git add $EXTRA_PATHS
+  for extra_path in $EXTRA_PATHS; do
+    if [[ -e "$extra_path" ]]; then
+      git add "$extra_path"
+    else
+      echo "Optional path not present; continuing: $extra_path"
+    fi
+  done
 fi
 git add pipeline/state.json
 
