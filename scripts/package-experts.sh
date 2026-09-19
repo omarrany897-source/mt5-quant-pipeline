@@ -18,12 +18,20 @@ is_valid_mql5_file() {
   ! grep -Eq 'run_openai_compatible_fallback|curl -fsS|```|Return ONLY the source code|Do not use a preamble|Authorization: Bearer' "$file" || return 1
   ! grep -Eiq '#property[[:space:]]+indicator_|OnCalculate[[:space:]]*\(|SetIndexBuffer[[:space:]]*\(|indicator_chart_window|indicator_buffers' "$file" || return 1
   grep -Eq '#include[[:space:]]+<Trade/Trade\.mqh>|(^|[[:space:]])CTrade[[:space:]]+[A-Za-z_][A-Za-z0-9_]*[[:space:]]*;' "$file" || return 1
+  grep -Eiq 'iATR[[:space:]]*\(|CopyBuffer[[:space:]]*\([^)]+atr|SYMBOL_SPREAD' "$file" || return 1
+  grep -Eiq 'RewardRisk|reward[[:space:]]*[/\*][[:space:]]*risk|1\.50' "$file" || return 1
   return 0
 }
 
 write_known_good_fallback() {
   local dir="$1"
   mkdir -p "$dir"
+  local dynamic_fallback
+  dynamic_fallback="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/Experts/EURUSD_2.mq5"
+  if [[ -s "$dynamic_fallback" ]]; then
+    cp "$dynamic_fallback" "$dir/GeneratedFallback.mq5"
+    return 0
+  fi
   cat > "$dir/GeneratedFallback.mq5" <<'MQL5'
 #property strict
 #property version "1.00"

@@ -13,6 +13,30 @@ another fix is introduced.
 | 3 | Ask Ollama for code-only output to `Experts/GeneratedStrategy.mq5` | The file was not created or did not contain `OnInit`/`OnTick` | The free model did not reliably follow the output-format instruction |
 | 4 | Use a smaller Ollama model | Phase 4 still reached packaging with no usable EA | Model size did not guarantee file creation or valid source |
 
+## Pattern #1: Static Multi-Asset Cloned Trigger Failure
+
+The EURUSD_1 optimization produced 42-44 trades on every symbol over one year,
+including FX, SP500, and UKOUSD, with profit factors of 0.70-0.76 and negative
+Sharpe ratios. This uniformity is evidence that the signal was not adapting to
+asset price structure: the EMA crossover and fixed point stops/targets were
+effectively a sparse, friction-dominated trigger. The low drawdown only shows
+that the minimum-volume risk control was conservative; it does not validate the
+entry edge.
+
+Mandatory prevention rules:
+
+1. A calendar or new-bar event may control evaluation frequency, but never be
+   the entry signal by itself. Entries require price action or market structure.
+2. Normalize breakout, stop, target, and filter thresholds with ATR or standard
+   deviation; fixed pip/point thresholds are not portable across assets.
+3. Read `SYMBOL_SPREAD` and reject entries when spread is a material fraction of
+   current ATR. Enforce reward/risk >= 1.50 before sending an order.
+4. M5/M15 strategies must target approximately 120-300 trades per active symbol
+   per year and must report expected frequency. Identical trade counts across
+   unrelated symbols are a failure signal requiring investigation.
+5. The packaging and compile gates must reject source that lacks ATR/volatility,
+   spread, and reward/risk logic for a new dynamic strategy.
+
 ## Current deterministic approach
 
 The pipeline now:

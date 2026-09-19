@@ -283,7 +283,10 @@ jobs:
             if ($text -notmatch '(?m)^\s*#property\s+strict' -or
                 $text -notmatch '\bint\s+OnInit\s*\(' -or
                 $text -notmatch '\bvoid\s+OnTick\s*\(' -or
-                $text -notmatch '#include\s+<Trade/Trade\.mqh>') {
+                $text -notmatch '#include\s+<Trade/Trade\.mqh>' -or
+                $text -notmatch 'iATR\s*\(' -or
+                $text -notmatch 'SYMBOL_SPREAD' -or
+                $text -notmatch 'RewardRisk|1\.50') {
               throw "Rejected incomplete EA before compilation: $($file.Name)"
             }
             $log = Join-Path $compileDir "$($file.BaseName).log"

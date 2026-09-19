@@ -67,9 +67,18 @@ DELIVERABLES:
      final EA source.
    - If uncertain, emit a minimal known-good EMA crossover EA with audited risk
      controls instead of prose or broken syntax.
-5. Structure the report as: **Phase 1 — Hypothesis** (edge and whether a
+5. Every new strategy must satisfy the research guardrails:
+   - Entries must use dynamic price action or market structure; a calendar,
+     fixed weekday, fixed interval, or new-bar check alone is never a signal.
+   - Volatility thresholds must be ATR- or standard-deviation-normalized.
+   - Use `SymbolInfoInteger(_Symbol, SYMBOL_SPREAD)` or an equivalent explicit
+     spread guard before entry.
+   - Stop and target distances must enforce risk-to-reward of at least 1:1.5.
+   - M5/M15 designs must target approximately 120-300 trades per active symbol
+     per year; report the expected frequency and reject cloned fixed-count logic.
+6. Structure the report as: **Phase 1 — Hypothesis** (edge and whether a
    time window is justified), **Phase 2 — Code** (complete MQL5 source), and
    **Phase 3 — Edge Cases** (conditions where the EA can fail). The code is
    mandatory, not a prose substitute.
-6. End the report with a dedicated code block containing
+7. End the report with a dedicated code block containing
    `FINAL_EA_FILENAME=[MARKET]_[VERSION].mq5`.
