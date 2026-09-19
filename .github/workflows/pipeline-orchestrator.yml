@@ -71,10 +71,12 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_API_KEY_BACKUP: ${{ secrets.GEMINI_API_KEY_BACKUP }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OLLAMA_FALLBACK_ENABLED: true
           OLLAMA_MODEL: qwen2.5:3b
-          GEMINI_TIMEOUT_SECONDS: 5400
-          MAX_ATTEMPTS: 2
+          GEMINI_TIMEOUT_SECONDS: 300
+          MAX_ATTEMPTS: 1
         run: |
           chmod +x scripts/run-agent-phase.sh
           ./scripts/run-agent-phase.sh 01-researcher outputs/01-researcher.md
@@ -98,9 +100,12 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_API_KEY_BACKUP: ${{ secrets.GEMINI_API_KEY_BACKUP }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OLLAMA_FALLBACK_ENABLED: true
           OLLAMA_MODEL: qwen2.5:3b
-          GEMINI_TIMEOUT_SECONDS: 3600
+          GEMINI_TIMEOUT_SECONDS: 300
+          MAX_ATTEMPTS: 1
         run: |
           chmod +x scripts/run-agent-phase.sh
           ./scripts/run-agent-phase.sh 02-analyst outputs/02-analyst.md outputs/01-researcher.md
@@ -124,9 +129,12 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_API_KEY_BACKUP: ${{ secrets.GEMINI_API_KEY_BACKUP }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OLLAMA_FALLBACK_ENABLED: true
           OLLAMA_MODEL: qwen2.5:3b
-          GEMINI_TIMEOUT_SECONDS: 3600
+          GEMINI_TIMEOUT_SECONDS: 300
+          MAX_ATTEMPTS: 1
         run: |
           chmod +x scripts/run-agent-phase.sh
           ./scripts/run-agent-phase.sh 03-strategy-designer outputs/03-strategy-designer.md outputs/02-analyst.md
@@ -150,9 +158,12 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_API_KEY_BACKUP: ${{ secrets.GEMINI_API_KEY_BACKUP }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OLLAMA_FALLBACK_ENABLED: true
-          OLLAMA_MODEL: qwen2.5:3b
-          GEMINI_TIMEOUT_SECONDS: 3600
+          OLLAMA_MODEL: qwen2.5:1.5b
+          GEMINI_TIMEOUT_SECONDS: 300
+          MAX_ATTEMPTS: 1
         run: |
           chmod +x scripts/run-agent-phase.sh
           ./scripts/run-agent-phase.sh 04-mt5-engineer outputs/04-mt5-engineer.md outputs/03-strategy-designer.md
@@ -160,6 +171,8 @@ jobs:
       - name: Commit Phase 4 output
         run: |
           chmod +x scripts/commit-phase-output.sh
+          chmod +x scripts/package-experts.sh
+          ./scripts/package-experts.sh Experts outputs/03-strategy-designer.md
           ./scripts/commit-phase-output.sh outputs/04-mt5-engineer.md done ${{ env.RUN_ID }} "Experts/" "${{ env.BRANCH_NAME }}"
 
   finalize:
@@ -226,3 +239,174 @@ jobs:
         run: |
           gh issue comment 1 --repo omarrany897-source/mt5-quant-pipeline \
             --body "✅ Pipeline run \`${{ env.RUN_ID }}\` completed. Final output: \`outputs/final/latest.md\`. [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" || true
+
+  install-local-expert-advisors:
+    needs: finalize
+    runs-on: [self-hosted, windows, mt5-local]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BRANCH_NAME }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compile every EA with MetaEditor before delivery
+        shell: powershell
+        env:
+          MT5_EXPERTS_DIR: 'C:\Users\Laptop\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\MQL5\Experts'
+        run: |
+          $source = Join-Path $env:GITHUB_WORKSPACE 'Experts'
+          $files = @(Get-ChildItem -Path $source -Filter '*.mq5' -File)
+          if ($files.Count -eq 0) {
+            throw "No .mq5 files were produced for compilation."
+          }
+          $metaEditor = @(
+            'C:\Program Files\MetaTrader 5\metaeditor64.exe'
+            'C:\Program Files (x86)\MetaTrader 5\metaeditor.exe'
+            (Join-Path $env:APPDATA 'MetaQuotes\Terminal\metaeditor64.exe')
+          ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $metaEditor) {
+            $metaEditor = Get-ChildItem -Path 'C:\Program Files','C:\Program Files (x86)' `
+              -Filter 'metaeditor*.exe' -File -Recurse -ErrorAction SilentlyContinue |
+              Select-Object -ExpandProperty FullName -First 1
+          }
+          if (-not $metaEditor) {
+            throw "MetaEditor was not found on the self-hosted runner; refusing to deliver uncompiled EAs."
+          }
+          $compileDir = Join-Path $env:RUNNER_TEMP 'mt5-compile'
+          New-Item -ItemType Directory -Force -Path $compileDir | Out-Null
+          foreach ($file in $files) {
+            $text = Get-Content -LiteralPath $file.FullName -Raw
+            if ($text -match '```|#property\s+indicator_|OnCalculate\s*\(|SetIndexBuffer\s*\(') {
+              throw "Rejected non-EA source before compilation: $($file.Name)"
+            }
+            if ($text -notmatch '(?m)^\s*#property\s+strict' -or
+                $text -notmatch '\bint\s+OnInit\s*\(' -or
+                $text -notmatch '\bvoid\s+OnTick\s*\(' -or
+                $text -notmatch '#include\s+<Trade/Trade\.mqh>' -or
+                $text -notmatch 'iATR\s*\(' -or
+                $text -notmatch 'SYMBOL_SPREAD' -or
+                $text -notmatch 'RewardRisk|1\.50') {
+              throw "Rejected incomplete EA before compilation: $($file.Name)"
+            }
+            $log = Join-Path $compileDir "$($file.BaseName).log"
+            New-Item -ItemType Directory -Force -Path $env:MT5_EXPERTS_DIR | Out-Null
+            $staged = Join-Path $env:MT5_EXPERTS_DIR "__pipeline_compile_$($file.Name)"
+            Copy-Item -LiteralPath $file.FullName -Destination $staged -Force
+            & $metaEditor /portable "/compile:$staged" "/log:$log"
+            Remove-Item -LiteralPath $staged -Force -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath ([IO.Path]::ChangeExtension($staged, '.ex5')) -Force -ErrorAction SilentlyContinue
+            if ($LASTEXITCODE -ne 0) {
+              throw "MetaEditor failed to compile $($file.Name) with exit code $LASTEXITCODE."
+            }
+            $logText = if (Test-Path $log) { Get-Content -LiteralPath $log -Raw } else { '' }
+            if ($logText -match '\b[1-9]\d*\s+errors?\b' -or
+                $logText -match '\berrors?\s*:\s*[1-9]\b' -or
+                $logText -match '\b[1-9]\d*\s+warnings?\b' -or
+                $logText -match '\bwarnings?\s*:\s*[1-9]\b') {
+              throw "MetaEditor reported compile errors or warnings for $($file.Name): $logText"
+            }
+            Write-Host "Compiled successfully: $($file.Name)"
+          }
+
+      - name: Copy complete pipeline output to local computer
+        shell: powershell
+        env:
+          MT5_EXPERTS_DIR: 'C:\Users\Laptop\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\MQL5\Experts'
+          MT5_ARCHIVE_DIR: 'C:\Users\Laptop\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\MQL5\Experts\PipelineOutputs'
+          DOWNLOADS_DIR: 'C:\Users\Laptop\Downloads'
+        run: |
+          $source = Join-Path $env:GITHUB_WORKSPACE 'Experts'
+          if (-not (Test-Path $source)) {
+          throw "No Experts directory was produced by the completed pipeline."
+          }
+          $files = @(Get-ChildItem -Path $source -Filter '*.mq5' -File)
+          if ($files.Count -eq 0) {
+          throw "No .mq5 files were produced by the completed pipeline."
+          }
+          New-Item -ItemType Directory -Force -Path $env:MT5_EXPERTS_DIR | Out-Null
+          New-Item -ItemType Directory -Force -Path $env:DOWNLOADS_DIR | Out-Null
+          $archivedEAs = @(Get-ChildItem -Path $env:MT5_ARCHIVE_DIR -Recurse -Filter '*.mq5' -File -ErrorAction SilentlyContinue)
+          foreach ($archived in $archivedEAs) {
+          $archivedDestination = Join-Path $env:MT5_EXPERTS_DIR $archived.Name
+          if (-not (Test-Path $archivedDestination)) {
+            Copy-Item -LiteralPath $archived.FullName -Destination $archivedDestination
+            Write-Host "Backfilled archived EA $($archived.Name) from $($archived.Directory.Name)"
+          }
+          }
+          foreach ($file in $files) {
+          $stem = [IO.Path]::GetFileNameWithoutExtension($file.Name)
+          if ($stem -notmatch '^[A-Z0-9]+(?:_[A-Z0-9]+)*_[0-9]+$') {
+            throw "Invalid EA filename '$($file.Name)'; expected MARKET_VERSION.mq5."
+          }
+          $destination = Join-Path $env:MT5_EXPERTS_DIR $file.Name
+          if (Test-Path $destination) {
+            $market = $stem.Substring(0, $stem.LastIndexOf('_'))
+            $version = [int]$stem.Substring($stem.LastIndexOf('_') + 1)
+            do {
+              $version++
+              $destination = Join-Path $env:MT5_EXPERTS_DIR "${market}_${version}.mq5"
+            } while (Test-Path $destination)
+          }
+          Copy-Item -LiteralPath $file.FullName -Destination $destination
+          Write-Host "Installed $($file.Name) as $(Split-Path $destination -Leaf) to $env:MT5_EXPERTS_DIR"
+          }
+          $runArchive = Join-Path $env:MT5_ARCHIVE_DIR "${{ env.RUN_ID }}"
+          New-Item -ItemType Directory -Force -Path $runArchive | Out-Null
+          Copy-Item -Path (Join-Path $env:GITHUB_WORKSPACE 'outputs') -Destination $runArchive -Recurse -Force
+          Copy-Item -Path $source -Destination $runArchive -Recurse -Force
+          Write-Host "Archived complete run output to $runArchive"
+          $downloaded = @()
+          Get-ChildItem -Path $env:MT5_EXPERTS_DIR -Filter '*.mq5' -File | ForEach-Object {
+            $downloadDestination = Join-Path $env:DOWNLOADS_DIR $_.Name
+            if (-not (Test-Path $downloadDestination)) {
+              Copy-Item -LiteralPath $_.FullName -Destination $downloadDestination
+              $downloaded += $_.Name
+              Write-Host "Copied $($_.Name) to $env:DOWNLOADS_DIR"
+            }
+          }
+          if ($downloaded.Count -eq 0) {
+            Write-Host "All pipeline EAs already exist in $env:DOWNLOADS_DIR"
+          }
+          $installed = @(Get-ChildItem -Path $env:MT5_EXPERTS_DIR -Filter '*.mq5' -File |
+            Where-Object { $_.LastWriteTime -ge (Get-Date).AddMinutes(-10) } |
+            Select-Object -ExpandProperty Name)
+          if ($installed.Count -eq 0) {
+            throw "Local installation completed without a recently written EA file."
+          }
+          @(
+            "EA installation succeeded."
+            "Run ID: ${{ env.RUN_ID }}"
+            "Installed file(s): $($installed -join ', ')"
+            "Destination: $env:MT5_EXPERTS_DIR"
+            "Workflow: $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
+          ) | Set-Content -Path (Join-Path $env:GITHUB_WORKSPACE 'ea-install-summary.txt') -Encoding UTF8
+
+      - name: Email EA installation notification
+        if: success()
+        shell: powershell
+        env:
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          EA_NOTIFY_TO: ${{ secrets.EA_NOTIFY_TO }}
+        run: |
+          $required = @('SMTP_SERVER', 'SMTP_PORT', 'SMTP_USERNAME', 'SMTP_PASSWORD', 'EA_NOTIFY_TO')
+          $missing = @($required | Where-Object { [string]::IsNullOrWhiteSpace((Get-Item "Env:$_").Value) })
+          if ($missing.Count -gt 0) {
+            Write-Warning "EA email notification skipped; configure repository secrets: $($missing -join ', ')"
+            exit 0
+          }
+          $securePassword = ConvertTo-SecureString $env:SMTP_PASSWORD -AsPlainText -Force
+          $credential = New-Object System.Management.Automation.PSCredential ($env:SMTP_USERNAME, $securePassword)
+          $summary = Get-Content (Join-Path $env:GITHUB_WORKSPACE 'ea-install-summary.txt') -Raw
+          Send-MailMessage `
+            -SmtpServer $env:SMTP_SERVER `
+            -Port ([int]$env:SMTP_PORT) `
+            -UseSsl `
+            -Credential $credential `
+            -From $env:SMTP_USERNAME `
+            -To $env:EA_NOTIFY_TO `
+            -Subject "MT5 EA installed successfully: run ${{ env.RUN_ID }}" `
+            -Body $summary

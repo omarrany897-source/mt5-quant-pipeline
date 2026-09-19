@@ -1,0 +1,42 @@
+name: Continue EA Pipeline
+
+on:
+  workflow_run:
+    workflows: ["Pipeline Orchestrator"]
+    types: [completed]
+  schedule:
+    - cron: "*/10 * * * *"
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: mt5-pipeline-continuation
+  cancel-in-progress: false
+
+jobs:
+  queue-next-run:
+    if: github.event_name == 'schedule' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Queue the next EA generation run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          active_runs="$(gh run list \
+            --repo "${{ github.repository }}" \
+            --workflow pipeline-orchestrator.yml \
+            --limit 20 \
+            --json status \
+            --jq '[.[] | select(.status == "queued" or .status == "in_progress")] | length')"
+
+          if [ "$active_runs" -gt 0 ]; then
+            echo "Pipeline Orchestrator already has an active run; no duplicate will be queued."
+            exit 0
+          fi
+
+          gh workflow run pipeline-orchestrator.yml \
+            --repo "${{ github.repository }}" \
+            --ref main \
+            --field trigger_source="continuous-${{ github.run_id }}"

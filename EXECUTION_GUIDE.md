@@ -2,6 +2,11 @@
 
 This pipeline runs **fully automated** via GitHub Actions. Four sequential AI agents produce literature research, triage, mathematical specifications, and production MQL5 Expert Advisors. Final results are stored in **`outputs/final/latest.md`** and archived per run.
 
+After a successful local-delivery run, `.github/workflows/continuous-pipeline.yml`
+waits five minutes and queues the next orchestrator run automatically. The cycle
+continues after each successful EA delivery; failed runs are handled separately
+by `auto-heal.yml` and do not start a second success cycle.
+
 ---
 
 ## Prerequisites
@@ -106,6 +111,25 @@ Trigger each phase individually by opening a GitHub Issue with the exact body te
 - **Run status:** `pipeline/state.json` → `status`, `current_phase`, `last_run_id`
 - **Live logs:** GitHub Actions → Pipeline Orchestrator
 - **Final answer:** `outputs/final/latest.md` after merge
+
+### Email notification after local EA installation
+
+The self-hosted installation job sends an email after it successfully copies a
+versioned `.mq5` file into the local MetaTrader 5 `Experts` directory. Add
+these repository secrets under **Settings → Secrets and variables → Actions**:
+
+| Secret | Value |
+|---|---|
+| `SMTP_SERVER` | SMTP hostname, such as `smtp.gmail.com` |
+| `SMTP_PORT` | TLS SMTP port, normally `587` |
+| `SMTP_USERNAME` | SMTP account/from address |
+| `SMTP_PASSWORD` | SMTP password or provider app password |
+| `EA_NOTIFY_TO` | Address that should receive EA notifications |
+
+The email includes the installed filename, local destination, run ID, and a
+link to the GitHub Actions run. If these secrets are not configured, the EA
+installation still succeeds and the workflow logs a warning instead of
+exposing credentials or falsely claiming that an email was sent.
 
 ### Forced Free-Alternative Recovery
 
