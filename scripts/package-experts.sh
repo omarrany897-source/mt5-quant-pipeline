@@ -41,13 +41,17 @@ if [[ "${#files[@]}" -eq 0 ]]; then
   exit 1
 fi
 
-markets="$(grep -Eio '\b[A-Z]{3,6}[/_-][A-Z]{3,6}\b|\b[A-Z]{6}\b' "$STRATEGY_FILE" 2>/dev/null \
+# Restrict names to recognizable tradeable symbols. Matching every six-letter
+# uppercase word in a report can produce an invalid, overlong filename.
+markets="$(grep -Eio '\b(EURUSD|GBPUSD|USDJPY|USDCHF|USDCAD|AUDUSD|NZDUSD|EURGBP|EURJPY|GBPJPY|XAUUSD|XAGUSD|US30|NAS100|SPX500|GER40|UK100|BTCUSD|ETHUSD)\b' "$STRATEGY_FILE" 2>/dev/null \
   | tr '[:lower:]' '[:upper:]' \
-  | sed -E 's#[/_-]#_#g' \
   | sort -u \
   | paste -sd '_' - || true)"
 markets="${markets:-MULTI_MARKET}"
 markets="$(printf '%s' "$markets" | tr -cd 'A-Z0-9_')"
+if (( ${#markets} > 80 )); then
+  markets="MULTI_MARKET"
+fi
 
 next_version() {
   local market="$1"
