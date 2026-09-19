@@ -239,10 +239,11 @@ jobs:
           ref: ${{ env.BRANCH_NAME }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Copy market-labelled EAs to MetaTrader 5
+      - name: Copy complete pipeline output to local computer
         shell: powershell
         env:
           MT5_EXPERTS_DIR: 'C:\Users\Laptop\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\MQL5\Experts'
+          MT5_ARCHIVE_DIR: 'C:\Users\Laptop\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\MQL5\Experts\PipelineOutputs'
         run: |
           $source = Join-Path $env:GITHUB_WORKSPACE 'Experts'
           if (-not (Test-Path $source)) {
@@ -257,3 +258,8 @@ jobs:
           Copy-Item -LiteralPath $file.FullName -Destination (Join-Path $env:MT5_EXPERTS_DIR $file.Name) -Force
           Write-Host "Installed $($file.Name) to $env:MT5_EXPERTS_DIR"
           }
+          $runArchive = Join-Path $env:MT5_ARCHIVE_DIR "${{ env.RUN_ID }}"
+          New-Item -ItemType Directory -Force -Path $runArchive | Out-Null
+          Copy-Item -Path (Join-Path $env:GITHUB_WORKSPACE 'outputs') -Destination $runArchive -Recurse -Force
+          Copy-Item -Path $source -Destination $runArchive -Recurse -Force
+          Write-Host "Archived complete run output to $runArchive"
