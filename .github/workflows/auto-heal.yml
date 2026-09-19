@@ -31,32 +31,55 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RUN_ID: ${{ github.event.workflow_run.id }}
         run: |
-          gh run view "$RUN_ID" --json jobs,headBranch,headSha \
-            > "$RUNNER_TEMP/failure.json"
+          gh run view "$RUN_ID" --json jobs,headBranch,headSha > "$RUNNER_TEMP/failure.json"
           gh run view "$RUN_ID" --log > "$RUNNER_TEMP/failure.log"
           echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
           echo "branch=${{ github.event.workflow_run.head_branch }}" >> "$GITHUB_OUTPUT"
 
-      - name: Diagnose and repair with Gemini
+      - name: Install Ollama repair model
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          nohup ollama serve > "$RUNNER_TEMP/ollama.log" 2>&1 &
+          for attempt in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:11434/api/tags >/dev/null 2>&1 && break
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:11434/api/tags >/dev/null
+          ollama pull qwen2.5:3b
+
+      - name: Diagnose and repair with Ollama
         id: repair
-        uses: google-github-actions/run-gemini-cli@v0.1.22
-        continue-on-error: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GEMINI_CLI_TRUST_WORKSPACE: 'true'
-        with:
-          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          upload_artifacts: 'true'
-          prompt: |
-            AUTONOMOUS AUTO-FIX MODE.
-            Failed Pipeline Orchestrator run: ${{ steps.failure.outputs.run_id }}.
-            Read `${{ runner.temp }}/failure.json` and `${{ runner.temp }}/failure.log`,
-            then inspect the repository and failed logs.
-            Diagnose the root cause, apply the smallest direct fix, and validate it.
-            Do not fabricate outputs or disable checks. Commit and push to the current
-            branch with:
-            fix(auto-heal): resolve [brief error description] and re-trigger
-            Stop after one repair iteration.
+          RUN_ID: ${{ steps.failure.outputs.run_id }}
+          REPAIR_BRANCH: ${{ steps.failure.outputs.branch }}
+        run: |
+          {
+            echo "You are repairing a failed GitHub Actions pipeline."
+            echo "Inspect the failure context and checked-out repository."
+            echo "Return ONLY a unified diff applicable with: git apply repair.patch"
+            echo "If no safe source fix is justified, return exactly NO_SAFE_FIX."
+            echo "Do not change generated outputs, disable checks, or invent credentials."
+            echo "Failure context:"
+            cat "$RUNNER_TEMP/failure.json"
+            tail -n 12000 "$RUNNER_TEMP/failure.log"
+          } > "$RUNNER_TEMP/repair-prompt.txt"
+
+          ollama run qwen2.5:3b < "$RUNNER_TEMP/repair-prompt.txt" > "$RUNNER_TEMP/repair-response.txt"
+          if grep -qx "NO_SAFE_FIX" "$RUNNER_TEMP/repair-response.txt"; then
+            echo "Ollama found no safe automatic fix."
+            exit 1
+          fi
+          sed -e '1{/^```diff$/d;}' -e '${/^```$/d;}' \
+            "$RUNNER_TEMP/repair-response.txt" > repair.patch
+          git apply --check repair.patch
+          git apply repair.patch
+          bash -n scripts/*.sh
+          git diff --check
+          git config user.name "ollama-auto-heal[bot]"
+          git config user.email "ollama-auto-heal[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(auto-heal): resolve pipeline failure and re-trigger"
+          git push origin "HEAD:${REPAIR_BRANCH}"
 
       - name: Retry failed workflow after repair
         if: steps.repair.outcome == 'success'
