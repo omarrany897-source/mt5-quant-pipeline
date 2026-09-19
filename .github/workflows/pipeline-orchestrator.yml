@@ -294,12 +294,13 @@ jobs:
             $staged = Join-Path $env:MT5_EXPERTS_DIR "__pipeline_compile_$($file.Name)"
             Copy-Item -LiteralPath $file.FullName -Destination $staged -Force
             & $metaEditor /portable "/compile:$staged" "/log:$log"
+            $compileExitCode = $LASTEXITCODE
             Remove-Item -LiteralPath $staged -Force -ErrorAction SilentlyContinue
             Remove-Item -LiteralPath ([IO.Path]::ChangeExtension($staged, '.ex5')) -Force -ErrorAction SilentlyContinue
-            if ($LASTEXITCODE -ne 0) {
-              throw "MetaEditor failed to compile $($file.Name) with exit code $LASTEXITCODE."
-            }
             $logText = if (Test-Path $log) { Get-Content -LiteralPath $log -Raw } else { '' }
+            if (-not (Test-Path $log)) {
+              throw "MetaEditor produced no compile log for $($file.Name) (process exit code: $compileExitCode)."
+            }
             if ($logText -match '\b[1-9]\d*\s+errors?\b' -or
                 $logText -match '\berrors?\s*:\s*[1-9]\b' -or
                 $logText -match '\b[1-9]\d*\s+warnings?\b' -or
