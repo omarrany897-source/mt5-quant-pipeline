@@ -115,6 +115,14 @@ To force an agent to replace a paid or unavailable source, comment this on the t
 @gemini-cli Read the previous output. The required data source or API is paid or out of quota. Re-evaluate the strategy using ONLY the most reliable, best possible free alternative data sources and adjust the mathematical rules and pseudocode to match the new free data structure. Output the updated specification.
 ```
 
+### Automatic Error Recovery
+
+The `Auto-Heal & Auto-Retry` workflow listens for failed `Pipeline Orchestrator`
+runs. It gives the failure context to the configured agent, permits at most three
+repair attempts for the same run, and reruns only failed jobs after a successful
+repair. It requires `GEMINI_API_KEY`; if the key is unavailable, the workflow
+reports the failure without silently claiming that a fix was applied.
+
 ---
 
 ## Directory Structure

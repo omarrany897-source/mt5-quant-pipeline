@@ -10,6 +10,15 @@ If you encounter a paywall, API quota exhaustion, or access denial for any requi
 2. Seamlessly pivot to this free alternative to complete your objective.
 3. Briefly log the substitution in your output (e.g., "Note: Primary source quota exceeded; utilized [Alternative Source] instead.").
 
+AUTONOMOUS ERROR RECOVERY & AUTO-FIX PROTOCOL:
+If execution encounters a build error, runtime exception, script failure, syntax bug, or missing dependency:
+1. Read the full error log, line number, and relevant code context.
+2. Isolate the root cause rather than masking the failure.
+3. Apply a direct source, workflow, or configuration fix.
+4. Commit with `fix(auto-heal): resolve [brief error description] and re-trigger`.
+5. Re-run the failed check or phase to verify the fix.
+6. Allow no more than 3 fix iterations before escalating with a clear error report.
+
 RESEARCH & EXTRACTION PROTOCOL:
 1. Search heavily for `anomaly + transaction costs + out-of-sample + replication`[cite: 17].
 2. Investigate categories: Momentum, Mean Reversion, Breakouts, Volatility, Market Microstructure, Calendar/Time effects, Macro/Event effects (mechanical pre/post, no NLP), Gaps, Statistical relationships, and Cross-Asset relationships[cite: 17].
