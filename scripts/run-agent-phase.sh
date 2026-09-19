@@ -35,6 +35,16 @@ install_ollama() {
 run_ollama_fallback() {
   install_ollama
   ollama_prompt="$PROMPT"
+  if [[ "$PHASE_ID" == "04-mt5-engineer" && -f pipeline_troubleshooting_log.md ]]; then
+    ollama_prompt="${ollama_prompt}
+
+--- ERROR LEDGER: READ BEFORE GENERATING ---
+$(cat pipeline_troubleshooting_log.md)
+--- END ERROR LEDGER ---
+
+Do not repeat any failed approach listed in the ledger. The EA artifact gate is
+mandatory even if the narrative report is complete."
+  fi
   for input in "prompts/${PHASE_ID}.md" "${INPUT_FILES[@]}"; do
     if [[ -n "$input" && -f "$input" ]]; then
       ollama_prompt="${ollama_prompt}
