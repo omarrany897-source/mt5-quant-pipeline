@@ -75,6 +75,22 @@ Expected frequency is a target, not a guarantee: validate each symbol with
 out-of-sample testing and reject runs that collapse below the 100-300 annual
 trade objective without a documented market-specific reason.
 
+## Pattern #3: Frequency-Only Validation Failure
+
+The EURUSD_3 optimization reached the desired frequency band, with roughly
+282-301 trades per symbol, but every symbol remained strongly negative:
+profit factors were approximately 0.61-0.68 and Sharpe was -5.00. This proves
+that a healthy trade count is necessary for statistical evaluation but is not
+evidence of an edge; the same-direction breakout rule was losing uniformly
+across asset classes.
+
+Future runs must report frequency and edge quality separately. A candidate that
+meets the 100-300 trade target but has uniformly negative out-of-sample
+expectancy must be marked failed, retained for learning, and followed by a new
+candidate rather than promoted as a finished strategy. Do not "fix" this by
+starving the signal; change the market mechanism or test a directionally
+distinct hypothesis.
+
 ## Current deterministic approach
 
 The pipeline now:

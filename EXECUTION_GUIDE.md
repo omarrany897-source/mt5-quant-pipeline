@@ -2,6 +2,11 @@
 
 This pipeline runs **fully automated** via GitHub Actions. Four sequential AI agents produce literature research, triage, mathematical specifications, and production MQL5 Expert Advisors. Final results are stored in **`outputs/final/latest.md`** and archived per run.
 
+After a successful local-delivery run, `.github/workflows/continuous-pipeline.yml`
+waits five minutes and queues the next orchestrator run automatically. The cycle
+continues after each successful EA delivery; failed runs are handled separately
+by `auto-heal.yml` and do not start a second success cycle.
+
 ---
 
 ## Prerequisites
