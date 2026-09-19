@@ -10,6 +10,13 @@ if [[ ! -d "$EXPERTS_DIR" ]]; then
 fi
 
 mapfile -t files < <(find "$EXPERTS_DIR" -maxdepth 1 -type f -iname '*.mq5' -print | sort)
+for file in "${files[@]}"; do
+  if ! grep -Eq '\b(OnInit|OnTick)[[:space:]]*\(' "$file"; then
+    echo "Rejecting non-EA file: $file"
+    rm -f "$file"
+  fi
+done
+mapfile -t files < <(find "$EXPERTS_DIR" -maxdepth 1 -type f -iname '*.mq5' -print | sort)
 if [[ "${#files[@]}" -eq 0 ]]; then
   echo "No file was written under ${EXPERTS_DIR}; extracting MQL5 code blocks from ${STRATEGY_FILE%03-strategy-designer.md}04-mt5-engineer.md."
   engineer_file="${STRATEGY_FILE%03-strategy-designer.md}04-mt5-engineer.md"
@@ -22,6 +29,13 @@ if [[ "${#files[@]}" -eq 0 ]]; then
   fi
   mapfile -t files < <(find "$EXPERTS_DIR" -maxdepth 1 -type f -iname '*.mq5' -print | sort)
 fi
+for file in "${files[@]}"; do
+  if ! grep -Eq '\b(OnInit|OnTick)[[:space:]]*\(' "$file"; then
+    echo "Rejecting non-EA file: $file"
+    rm -f "$file"
+  fi
+done
+mapfile -t files < <(find "$EXPERTS_DIR" -maxdepth 1 -type f -iname '*.mq5' -print | sort)
 if [[ "${#files[@]}" -eq 0 ]]; then
   echo "ERROR: No .mq5 Expert Advisor was generated or extractable."
   exit 1

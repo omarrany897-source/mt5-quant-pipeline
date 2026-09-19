@@ -50,6 +50,22 @@ You cannot call tools. Return only the complete contents for ${OUTPUT_FILE}.
 Do not use a preamble or omit required sections.
 For the 04-mt5-engineer phase, the response must include at least one complete compilable MQL5 Expert Advisor inside a fenced code block marked \`\`\`mql5. Include the exact target market symbol in the EA comments and filename guidance."
   ollama run "$OLLAMA_MODEL" "$ollama_prompt" > "$OUTPUT_FILE"
+
+  if [[ "$PHASE_ID" == "04-mt5-engineer" ]] && ! grep -Eq 'OnInit|OnTick|```(mql5|mq5)' "$OUTPUT_FILE"; then
+    mkdir -p Experts
+    strategy="$(cat "${INPUT_FILES[0]}")"
+    cat > /tmp/mt5-code-prompt.txt <<EOF
+Create one complete, compilable MetaTrader 5 Expert Advisor in MQL5.
+Return ONLY the source code, with no Markdown fences or explanation.
+Use the strategy specification below. If no market is explicit, use EURUSD.
+The code must contain OnInit() and OnTick(), use only standard MQL5 APIs, and include fixed risk controls.
+
+--- STRATEGY SPECIFICATION ---
+${strategy}
+--- END SPECIFICATION ---
+EOF
+    ollama run "$OLLAMA_MODEL" "$(cat /tmp/mt5-code-prompt.txt)" > Experts/GeneratedStrategy.mq5
+  fi
 }
 
 echo "Installing Gemini CLI (timeout: ${GEMINI_INSTALL_TIMEOUT_SECONDS}s)..."
