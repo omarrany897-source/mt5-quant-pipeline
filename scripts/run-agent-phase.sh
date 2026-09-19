@@ -246,7 +246,10 @@ for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
     echo "Trying OpenRouter free fallback."
     if run_openai_compatible_fallback "$OPENROUTER_API_KEY" "https://openrouter.ai/api/v1" "$OPENROUTER_MODEL"; then
       echo "Success with OpenRouter fallback: ${OUTPUT_FILE} ($(wc -c < "$OUTPUT_FILE") bytes)"
-      if [[ "$PHASE_ID" != "04-mt5-engineer" || -d Experts && -n "$(find Experts -maxdepth 1 -type f -name '*.mq5' -print -quit)" || grep -Eq '\b(OnInit|OnTick)[[:space:]]*\(' "$OUTPUT_FILE" ]]; then
+      if [[ "$PHASE_ID" != "04-mt5-engineer" ]]; then
+        exit 0
+      fi
+      if [[ -d Experts && -n "$(find Experts -maxdepth 1 -type f -name '*.mq5' -print -quit)" ]] || grep -Eq '\b(OnInit|OnTick)[[:space:]]*\(' "$OUTPUT_FILE"; then
         exit 0
       fi
     fi
@@ -256,7 +259,10 @@ for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
     echo "Trying Groq fallback."
     if run_openai_compatible_fallback "$GROQ_API_KEY" "https://api.groq.com/openai/v1" "$GROQ_MODEL"; then
       echo "Success with Groq fallback: ${OUTPUT_FILE} ($(wc -c < "$OUTPUT_FILE") bytes)"
-      if [[ "$PHASE_ID" != "04-mt5-engineer" || -d Experts && -n "$(find Experts -maxdepth 1 -type f -name '*.mq5' -print -quit)" || grep -Eq '\b(OnInit|OnTick)[[:space:]]*\(' "$OUTPUT_FILE" ]]; then
+      if [[ "$PHASE_ID" != "04-mt5-engineer" ]]; then
+        exit 0
+      fi
+      if [[ -d Experts && -n "$(find Experts -maxdepth 1 -type f -name '*.mq5' -print -quit)" ]] || grep -Eq '\b(OnInit|OnTick)[[:space:]]*\(' "$OUTPUT_FILE"; then
         exit 0
       fi
     fi
