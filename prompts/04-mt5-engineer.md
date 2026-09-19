@@ -27,3 +27,4 @@ ENGINEERING STANDARDS & EXECUTION REALITY:
 DELIVERABLES:
 1. MT5 Implementation Roadmap: Describe the architecture for turning the strongest candidate into a production EA[cite: 17].
 2. Production-ready `.mq5` files for the specified strategies, fully commented and avoiding ambiguous logic[cite: 17].
+3. Create the files under `Experts/` and name every file with the exact market symbol(s) it is intended to trade, for example `EURUSD_MomentumBreakout.mq5` or `EURUSD_GBPUSD_MeanReversion.mq5`. Never omit the market from the filename.

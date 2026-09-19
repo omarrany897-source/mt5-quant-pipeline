@@ -160,6 +160,8 @@ jobs:
       - name: Commit Phase 4 output
         run: |
           chmod +x scripts/commit-phase-output.sh
+          chmod +x scripts/package-experts.sh
+          ./scripts/package-experts.sh Experts outputs/03-strategy-designer.md
           ./scripts/commit-phase-output.sh outputs/04-mt5-engineer.md done ${{ env.RUN_ID }} "Experts/" "${{ env.BRANCH_NAME }}"
 
   finalize:
