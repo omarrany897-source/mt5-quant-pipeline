@@ -10,6 +10,46 @@ MAX_ATTEMPTS="${MAX_ATTEMPTS:-3}"
 GEMINI_INSTALL_TIMEOUT_SECONDS="${GEMINI_INSTALL_TIMEOUT_SECONDS:-600}"
 GEMINI_TIMEOUT_SECONDS="${GEMINI_TIMEOUT_SECONDS:-1800}"
 BACKUP_API_KEY="${GEMINI_API_KEY_BACKUP:-}"
+OLLAMA_FALLBACK_ENABLED="${OLLAMA_FALLBACK_ENABLED:-true}"
+OLLAMA_MODEL="${OLLAMA_MODEL:-qwen2.5:3b}"
+
+install_ollama() {
+  if command -v ollama >/dev/null 2>&1; then
+    return 0
+  fi
+  echo "Installing Ollama fallback..."
+  curl -fsSL https://ollama.com/install.sh | sh
+  ollama serve >/tmp/ollama.log 2>&1 &
+  OLLAMA_PID=$!
+  trap 'kill "$OLLAMA_PID" 2>/dev/null || true' EXIT
+  for _ in $(seq 1 30); do
+    if curl -fsS http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then
+      break
+    fi
+    sleep 2
+  done
+  curl -fsS http://127.0.0.1:11434/api/tags >/dev/null
+  ollama pull "$OLLAMA_MODEL"
+}
+
+run_ollama_fallback() {
+  install_ollama
+  ollama_prompt="$PROMPT"
+  for input in "prompts/${PHASE_ID}.md" "${INPUT_FILES[@]}"; do
+    if [[ -n "$input" && -f "$input" ]]; then
+      ollama_prompt="${ollama_prompt}
+
+--- BEGIN ${input} ---
+$(cat "$input")
+--- END ${input} ---"
+    fi
+  done
+  ollama_prompt="${ollama_prompt}
+
+You cannot call tools. Return only the complete contents for ${OUTPUT_FILE}.
+Do not use a preamble or omit required sections."
+  ollama run "$OLLAMA_MODEL" "$ollama_prompt" > "$OUTPUT_FILE"
+}
 
 echo "Installing Gemini CLI (timeout: ${GEMINI_INSTALL_TIMEOUT_SECONDS}s)..."
 if ! timeout --foreground --signal=TERM --kill-after=30s \
@@ -63,6 +103,18 @@ for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
       fi
     else
       echo "Backup Gemini key also failed."
+    fi
+  fi
+
+  if [[ "$OLLAMA_FALLBACK_ENABLED" == "true" ]]; then
+    echo "Trying local Ollama fallback with ${OLLAMA_MODEL}."
+    if run_ollama_fallback; then
+      if [[ -s "$OUTPUT_FILE" ]]; then
+        echo "Success with Ollama fallback: ${OUTPUT_FILE} ($(wc -c < "$OUTPUT_FILE") bytes)"
+        exit 0
+      fi
+    else
+      echo "Ollama fallback failed."
     fi
   fi
 
