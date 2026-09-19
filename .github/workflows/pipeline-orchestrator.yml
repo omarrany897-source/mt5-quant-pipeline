@@ -265,6 +265,14 @@ jobs:
           throw "No .mq5 files were produced by the completed pipeline."
           }
           New-Item -ItemType Directory -Force -Path $env:MT5_EXPERTS_DIR | Out-Null
+          $archivedEAs = @(Get-ChildItem -Path $env:MT5_ARCHIVE_DIR -Recurse -Filter '*.mq5' -File -ErrorAction SilentlyContinue)
+          foreach ($archived in $archivedEAs) {
+          $archivedDestination = Join-Path $env:MT5_EXPERTS_DIR $archived.Name
+          if (-not (Test-Path $archivedDestination)) {
+            Copy-Item -LiteralPath $archived.FullName -Destination $archivedDestination
+            Write-Host "Backfilled archived EA $($archived.Name) from $($archived.Directory.Name)"
+          }
+          }
           foreach ($file in $files) {
           $stem = [IO.Path]::GetFileNameWithoutExtension($file.Name)
           if ($stem -notmatch '^[A-Z0-9]+(?:_[A-Z0-9]+)*_[0-9]+$') {
