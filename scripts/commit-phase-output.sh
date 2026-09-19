@@ -21,8 +21,14 @@ fi
 git config user.name "gemini-cli[bot]"
 git config user.email "gemini-cli[bot]@users.noreply.github.com"
 
+STASH_BEFORE="$(git rev-parse -q --verify refs/stash || true)"
+git stash push --include-untracked -m "pipeline output before branch rebase" >/dev/null || true
+STASH_AFTER="$(git rev-parse -q --verify refs/stash || true)"
 git fetch origin "$PIPELINE_BRANCH"
 git rebase "origin/${PIPELINE_BRANCH}"
+if [[ "$STASH_AFTER" != "$STASH_BEFORE" ]]; then
+  git stash pop
+fi
 
 jq --arg phase "$NEXT_PHASE" '.current_phase = $phase' pipeline/state.json > /tmp/state.json
 mv /tmp/state.json pipeline/state.json
