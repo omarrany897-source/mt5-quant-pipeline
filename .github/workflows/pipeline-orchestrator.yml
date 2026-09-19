@@ -250,6 +250,62 @@ jobs:
           ref: ${{ env.BRANCH_NAME }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Compile every EA with MetaEditor before delivery
+        shell: powershell
+        env:
+          MT5_EXPERTS_DIR: 'C:\Users\Laptop\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\MQL5\Experts'
+        run: |
+          $source = Join-Path $env:GITHUB_WORKSPACE 'Experts'
+          $files = @(Get-ChildItem -Path $source -Filter '*.mq5' -File)
+          if ($files.Count -eq 0) {
+            throw "No .mq5 files were produced for compilation."
+          }
+          $metaEditor = @(
+            'C:\Program Files\MetaTrader 5\metaeditor64.exe'
+            'C:\Program Files (x86)\MetaTrader 5\metaeditor.exe'
+            (Join-Path $env:APPDATA 'MetaQuotes\Terminal\metaeditor64.exe')
+          ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $metaEditor) {
+            $metaEditor = Get-ChildItem -Path 'C:\Program Files','C:\Program Files (x86)' `
+              -Filter 'metaeditor*.exe' -File -Recurse -ErrorAction SilentlyContinue |
+              Select-Object -ExpandProperty FullName -First 1
+          }
+          if (-not $metaEditor) {
+            throw "MetaEditor was not found on the self-hosted runner; refusing to deliver uncompiled EAs."
+          }
+          $compileDir = Join-Path $env:RUNNER_TEMP 'mt5-compile'
+          New-Item -ItemType Directory -Force -Path $compileDir | Out-Null
+          foreach ($file in $files) {
+            $text = Get-Content -LiteralPath $file.FullName -Raw
+            if ($text -match '```|#property\s+indicator_|OnCalculate\s*\(|SetIndexBuffer\s*\(') {
+              throw "Rejected non-EA source before compilation: $($file.Name)"
+            }
+            if ($text -notmatch '(?m)^\s*#property\s+strict' -or
+                $text -notmatch '\bint\s+OnInit\s*\(' -or
+                $text -notmatch '\bvoid\s+OnTick\s*\(' -or
+                $text -notmatch '#include\s+<Trade/Trade\.mqh>') {
+              throw "Rejected incomplete EA before compilation: $($file.Name)"
+            }
+            $log = Join-Path $compileDir "$($file.BaseName).log"
+            New-Item -ItemType Directory -Force -Path $env:MT5_EXPERTS_DIR | Out-Null
+            $staged = Join-Path $env:MT5_EXPERTS_DIR "__pipeline_compile_$($file.Name)"
+            Copy-Item -LiteralPath $file.FullName -Destination $staged -Force
+            & $metaEditor /portable "/compile:$staged" "/log:$log"
+            Remove-Item -LiteralPath $staged -Force -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath ([IO.Path]::ChangeExtension($staged, '.ex5')) -Force -ErrorAction SilentlyContinue
+            if ($LASTEXITCODE -ne 0) {
+              throw "MetaEditor failed to compile $($file.Name) with exit code $LASTEXITCODE."
+            }
+            $logText = if (Test-Path $log) { Get-Content -LiteralPath $log -Raw } else { '' }
+            if ($logText -match '\b[1-9]\d*\s+errors?\b' -or
+                $logText -match '\berrors?\s*:\s*[1-9]\b' -or
+                $logText -match '\b[1-9]\d*\s+warnings?\b' -or
+                $logText -match '\bwarnings?\s*:\s*[1-9]\b') {
+              throw "MetaEditor reported compile errors or warnings for $($file.Name): $logText"
+            }
+            Write-Host "Compiled successfully: $($file.Name)"
+          }
+
       - name: Copy complete pipeline output to local computer
         shell: powershell
         env:

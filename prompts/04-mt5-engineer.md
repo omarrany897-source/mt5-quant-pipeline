@@ -60,9 +60,16 @@ DELIVERABLES:
    such as `EURUSD_1.mq5` or `US30_NAS100_1.mq5`. Extract the market or asset
    class from the strategy, join multiple markets with underscores, and choose
    the next unused integer. Never overwrite an existing EA.
-4. Structure the report as: **Phase 1 — Hypothesis** (edge and whether a
+4. The generated MQL5 source must be compile-safe and valid for MetaEditor:
+   - `#property strict` is required.
+   - `int OnInit()` and `void OnTick()` are mandatory.
+   - No markdown fences, extra commentary, or shell code may be included in the
+     final EA source.
+   - If uncertain, emit a minimal known-good EMA crossover EA with audited risk
+     controls instead of prose or broken syntax.
+5. Structure the report as: **Phase 1 — Hypothesis** (edge and whether a
    time window is justified), **Phase 2 — Code** (complete MQL5 source), and
    **Phase 3 — Edge Cases** (conditions where the EA can fail). The code is
    mandatory, not a prose substitute.
-5. End the report with a dedicated code block containing
+6. End the report with a dedicated code block containing
    `FINAL_EA_FILENAME=[MARKET]_[VERSION].mq5`.
