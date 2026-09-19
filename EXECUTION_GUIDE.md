@@ -2,10 +2,12 @@
 
 This pipeline runs **fully automated** via GitHub Actions. Four sequential AI agents produce literature research, triage, mathematical specifications, and production MQL5 Expert Advisors. Final results are stored in **`outputs/final/latest.md`** and archived per run.
 
-After a successful local-delivery run, `.github/workflows/continuous-pipeline.yml`
-waits five minutes and queues the next orchestrator run automatically. The cycle
-continues after each successful EA delivery; failed runs are handled separately
-by `auto-heal.yml` and do not start a second success cycle.
+`.github/workflows/continuous-pipeline.yml` is the permanent watchdog for the
+engine. It queues the next orchestrator immediately after a completed run when
+no run is active, and checks every five minutes as a recovery path for failed,
+cancelled, or manually stopped runs. The watchdog also supports
+`workflow_dispatch` for manual recovery. Its active-run check prevents duplicate
+orchestrators, while `auto-heal.yml` repairs failed runs separately.
 
 ---
 

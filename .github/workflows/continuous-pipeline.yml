@@ -5,7 +5,8 @@ on:
     workflows: ["Pipeline Orchestrator"]
     types: [completed]
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
 
 permissions:
   actions: write
@@ -17,8 +18,9 @@ concurrency:
 
 jobs:
   queue-next-run:
-    if: github.event_name == 'schedule' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Queue the next EA generation run
         env:
