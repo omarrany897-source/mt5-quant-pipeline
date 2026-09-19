@@ -151,7 +151,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_API_KEY_BACKUP: ${{ secrets.GEMINI_API_KEY_BACKUP }}
           OLLAMA_FALLBACK_ENABLED: true
-          OLLAMA_MODEL: qwen2.5:3b
+          OLLAMA_MODEL: qwen2.5:1.5b
           GEMINI_TIMEOUT_SECONDS: 3600
         run: |
           chmod +x scripts/run-agent-phase.sh
