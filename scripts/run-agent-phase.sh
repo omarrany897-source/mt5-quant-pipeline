@@ -88,6 +88,7 @@ EOF
 input string InpMarket = "EURUSD";
 input ENUM_TIMEFRAMES InpTimeframe = PERIOD_H1;
 input double InpRiskPercent = 0.50;
+input bool Use_Time_Window = false;
 input int Start_Hour = 8;
 input int Start_Minute = 0;
 input int End_Hour = 16;
@@ -105,6 +106,7 @@ datetime last_bar = 0;
 
 bool InTradingWindow()
 {
+   if(!Use_Time_Window) return true;
    MqlDateTime now;
    TimeToStruct(TimeCurrent(), now);
    int current = now.hour * 60 + now.min;

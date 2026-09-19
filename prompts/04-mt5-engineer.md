@@ -16,10 +16,13 @@ a pre-packaged indicator strategy.
 1. **Broad data synthesis:** Consider macro regimes, sentiment, volatility,
    liquidity/market structure, and cross-asset relationships where the
    available evidence supports them. Do not claim live or unavailable data.
-2. **Strict temporal targeting:** Every EA must define and justify one exact
-   operating window. Expose `Start_Hour`, `Start_Minute`, `End_Hour`, and
-   `End_Minute` inputs and enforce the window in the entry logic using the
-   documented broker/server timezone.
+2. **Temporal targeting when justified:** Use a specific operating window only
+   when the evidence shows a meaningful time-of-day effect, such as session
+   liquidity, volatility, or scheduled-event behavior. If no such edge is
+   supported, allow continuous operation. When a window is justified, expose
+   `Start_Hour`, `Start_Minute`, `End_Hour`, and `End_Minute` inputs and enforce
+   it using the documented broker/server timezone; explain the decision in the
+   hypothesis.
 3. **Adaptive modular architecture:** Separate signal, filter, execution/risk,
    trade-management, trailing, and event-filter responsibilities. Use dynamic
    position sizing, hard stops, and explicit transaction-cost/spread checks.
@@ -54,7 +57,7 @@ DELIVERABLES:
 1. MT5 Implementation Roadmap: Describe the architecture for turning the strongest candidate into a production EA[cite: 17].
 2. Production-ready `.mq5` files for the specified strategies, fully commented and avoiding ambiguous logic[cite: 17].
 3. Create the files under `Experts/` and name every file with the exact market symbol(s) it is intended to trade, for example `EURUSD_MomentumBreakout.mq5` or `EURUSD_GBPUSD_MeanReversion.mq5`. Never omit the market from the filename.
-4. Structure the report as: **Phase 1 — Hypothesis** (edge and exact time
-   window), **Phase 2 — Code** (complete MQL5 source), and **Phase 3 — Edge
-   Cases** (conditions where the EA can fail). The code is mandatory, not a
-   prose substitute.
+4. Structure the report as: **Phase 1 — Hypothesis** (edge and whether a
+   time window is justified), **Phase 2 — Code** (complete MQL5 source), and
+   **Phase 3 — Edge Cases** (conditions where the EA can fail). The code is
+   mandatory, not a prose substitute.
