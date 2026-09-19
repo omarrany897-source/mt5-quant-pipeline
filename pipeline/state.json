@@ -1,7 +1,7 @@
 {
   "version": 1,
   "status": "running",
-  "current_phase": "01-researcher",
+  "current_phase": "02-analyst",
   "last_run_id": "35413392348",
   "last_completed_at": null,
   "last_final_output": null,
