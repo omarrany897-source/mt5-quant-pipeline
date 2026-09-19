@@ -228,3 +228,32 @@ jobs:
         run: |
           gh issue comment 1 --repo omarrany897-source/mt5-quant-pipeline \
             --body "✅ Pipeline run \`${{ env.RUN_ID }}\` completed. Final output: \`outputs/final/latest.md\`. [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" || true
+
+  install-local-expert-advisors:
+    needs: finalize
+    runs-on: [self-hosted, windows, mt5-local]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BRANCH_NAME }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Copy market-labelled EAs to MetaTrader 5
+        shell: powershell
+        env:
+          MT5_EXPERTS_DIR: 'C:\Users\Laptop\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\MQL5\Experts'
+        run: |
+          $source = Join-Path $env:GITHUB_WORKSPACE 'Experts'
+          if (-not (Test-Path $source)) {
+          throw "No Experts directory was produced by the completed pipeline."
+          }
+          $files = @(Get-ChildItem -Path $source -Filter '*.mq5' -File)
+          if ($files.Count -eq 0) {
+          throw "No .mq5 files were produced by the completed pipeline."
+          }
+          New-Item -ItemType Directory -Force -Path $env:MT5_EXPERTS_DIR | Out-Null
+          foreach ($file in $files) {
+          Copy-Item -LiteralPath $file.FullName -Destination (Join-Path $env:MT5_EXPERTS_DIR $file.Name) -Force
+          Write-Host "Installed $($file.Name) to $env:MT5_EXPERTS_DIR"
+          }
