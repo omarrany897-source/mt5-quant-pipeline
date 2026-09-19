@@ -49,19 +49,27 @@ markets="$(grep -Eio '\b[A-Z]{3,6}[/_-][A-Z]{3,6}\b|\b[A-Z]{6}\b' "$STRATEGY_FIL
 markets="${markets:-MULTI_MARKET}"
 markets="$(printf '%s' "$markets" | tr -cd 'A-Z0-9_')"
 
-index=0
+next_version() {
+  local market="$1"
+  local version=1
+  while [[ -e "${EXPERTS_DIR}/${market}_${version}.mq5" ]]; do
+    version=$((version + 1))
+  done
+  printf '%s' "$version"
+}
+
+version="$(next_version "$markets")"
 for file in "${files[@]}"; do
-  base="$(basename "$file" .mq5)"
-  safe_base="$(printf '%s' "$base" | tr '[:lower:]' '[:upper:]' | tr -cd 'A-Z0-9_')"
-  if [[ -z "$safe_base" || "$safe_base" == "EA" || "$safe_base" == "EXPERTADVISOR" ]]; then
-    safe_base="STRATEGY"
-  fi
-  index=$((index + 1))
-  target="${EXPERTS_DIR}/${markets}_${safe_base}_${index}.mq5"
+  target="${EXPERTS_DIR}/${markets}_${version}.mq5"
+  while [[ -e "$target" && "$file" != "$target" ]]; do
+    version=$((version + 1))
+    target="${EXPERTS_DIR}/${markets}_${version}.mq5"
+  done
   if [[ "$file" != "$target" ]]; then
     mv "$file" "$target"
   fi
-  echo "Packaged ${target}"
+  echo "Packaged ${target} (FINAL_EA_FILENAME=${markets}_${version}.mq5)"
+  version=$((version + 1))
 done
 
 find "$EXPERTS_DIR" -maxdepth 1 -type f -iname '*.mq5' -print | sort

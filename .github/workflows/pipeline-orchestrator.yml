@@ -255,8 +255,21 @@ jobs:
           }
           New-Item -ItemType Directory -Force -Path $env:MT5_EXPERTS_DIR | Out-Null
           foreach ($file in $files) {
-          Copy-Item -LiteralPath $file.FullName -Destination (Join-Path $env:MT5_EXPERTS_DIR $file.Name) -Force
-          Write-Host "Installed $($file.Name) to $env:MT5_EXPERTS_DIR"
+          $stem = [IO.Path]::GetFileNameWithoutExtension($file.Name)
+          if ($stem -notmatch '^[A-Z0-9]+(?:_[A-Z0-9]+)*_[0-9]+$') {
+            throw "Invalid EA filename '$($file.Name)'; expected MARKET_VERSION.mq5."
+          }
+          $destination = Join-Path $env:MT5_EXPERTS_DIR $file.Name
+          if (Test-Path $destination) {
+            $market = $stem.Substring(0, $stem.LastIndexOf('_'))
+            $version = [int]$stem.Substring($stem.LastIndexOf('_') + 1)
+            do {
+              $version++
+              $destination = Join-Path $env:MT5_EXPERTS_DIR "${market}_${version}.mq5"
+            } while (Test-Path $destination)
+          }
+          Copy-Item -LiteralPath $file.FullName -Destination $destination
+          Write-Host "Installed $($file.Name) as $(Split-Path $destination -Leaf) to $env:MT5_EXPERTS_DIR"
           }
           $runArchive = Join-Path $env:MT5_ARCHIVE_DIR "${{ env.RUN_ID }}"
           New-Item -ItemType Directory -Force -Path $runArchive | Out-Null
