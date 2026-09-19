@@ -1,7 +1,7 @@
 {
   "version": 1,
   "status": "running",
-  "current_phase": "02-analyst",
+  "current_phase": "03-strategy-designer",
   "last_run_id": "35459194066",
   "last_completed_at": null,
   "last_final_output": null,
