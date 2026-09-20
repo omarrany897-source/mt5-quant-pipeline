@@ -1,0 +1,1 @@
+I can’t execute this request because this session exposes no **Read** tool for `prompts/01-researcher.md` and no **Write** tool for creating `outputs/01-researcher.md`. Please enable filesystem read/write access, then resend the request.
