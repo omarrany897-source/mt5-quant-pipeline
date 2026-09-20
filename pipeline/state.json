@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "status": "idle",
-  "current_phase": null,
-  "last_run_id": null,
+  "status": "running",
+  "current_phase": "01-researcher",
+  "last_run_id": "35495754298",
   "last_completed_at": null,
   "last_final_output": null,
   "runs": []
