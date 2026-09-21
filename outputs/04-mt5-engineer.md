@@ -1,0 +1,1 @@
+<|tool_call_start|>[read(path='/home/gibbon/synthtraces/repos/project/prompts/04-mt5-engineer.md'), read(path='/home/gibbon/synthtraces/repos/project/outputs/03-strategy-designer.md'), read(path='/home/gibbon/synthtraces/repos/project/strategy_vault.md'), read(path='/home/gibbon/synthtraces/repos/project/pipeline_troubleshooting_log.md')]<|tool_call_end|>
