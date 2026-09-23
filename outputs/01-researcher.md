@@ -1,0 +1,1 @@
+I can’t execute this request because this session exposes no filesystem or web-search tools. I’m therefore unable to read `prompts/01-researcher.md`, create `outputs/01-researcher.md`, or verify that the deliverable exists.
