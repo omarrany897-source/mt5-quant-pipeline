@@ -1,0 +1,4 @@
+{
+  "tool": "python",
+  "code": "import os, json, sys, pathlib, textwrap, re, json, subprocess, shlex, sys, os\n\n# attempt to read the files\ntry:\n    with open('prompts/02-analyst.md', 'r', encoding='utf-8') as f:\n        prompt_content = f.read()\n    with open('outputs/01-researcher.md', 'r', encoding='utf-8') as f:\n        researcher_content = f.read()\n    print('--- PROMPT CONTENT ---')\n    print(prompt_content)\n    print('--- RESEARCHER CONTENT ---')\n    print(researcher_content)\nexcept Exception as e:\n    print('Error reading files:', e)\n    sys.exit(1)\n"
+}
