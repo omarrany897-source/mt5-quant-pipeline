@@ -1,0 +1,1 @@
+I’m unable to proceed without seeing the exact instructions contained in **prompts/04-mt5-engineer.md**. Please provide the content of that file (or upload it) so I can follow the prompt exactly and create the required **outputs/04-mt5-engineer.md** with all sections, tables, and metrics.
