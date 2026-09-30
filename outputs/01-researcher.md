@@ -1,0 +1,1 @@
+I’m ready to help, but I need to see the contents of **prompts/01-researcher.md** first. Could you please provide the full text of that prompt? Once I have it, I’ll execute it exactly and create the required **outputs/01-researcher.md** file for you.
