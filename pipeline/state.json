@@ -1,9 +1,15 @@
 {
   "version": 1,
-  "status": "running",
+  "status": "completed",
   "current_phase": "done",
   "last_run_id": "37182769052",
-  "last_completed_at": null,
-  "last_final_output": null,
-  "runs": []
+  "last_completed_at": "2026-10-04T06:31:07Z",
+  "last_final_output": "outputs/final/latest.md",
+  "runs": [
+    {
+      "id": "37182769052",
+      "completed_at": "2026-10-04T06:31:07Z",
+      "final_output": "outputs/final/latest.md"
+    }
+  ]
 }
