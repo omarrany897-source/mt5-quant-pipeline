@@ -1,0 +1,2 @@
+We need to read the prompt file prompts/01-researcher.md. Since we cannot actually read files, but we need to simulate. Probably the prompt contains instructions to produce a researcher document. We need to locate that file. In this environment, we may not have direct file system access, but we can attempt to read via python? The tool is "Write" to create outputs/01-researcher.md. But we need to read prompts/01-researcher.md first. Let's attempt to read it via python.
+
