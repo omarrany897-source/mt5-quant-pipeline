@@ -1,0 +1,1 @@
+I need to read the file `prompts/01-researcher.md` to understand the exact requirements for the deliverable. Could you please provide the contents of that file (or a summary of its required sections, tables, metrics, and any specific topic or scope)? Once I have that information, I will create `outputs/01-researcher.md` exactly as specified.
