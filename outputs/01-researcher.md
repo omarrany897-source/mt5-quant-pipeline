@@ -1,0 +1,1 @@
+I’m ready to help, but I don’t have the content of **prompts/01-researcher.md** available to read. Could you please provide the text of that prompt (or the relevant sections) so I can execute it exactly as requested?
