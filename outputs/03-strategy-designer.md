@@ -1,0 +1,1 @@
+<tool_call>read<param_key>filePath</param_key><param_value>/home/developer/project/prompts/03-strategy-designer.md</param_value></tool_call><tool_call>read<param_key>filePath</param_key><param_value>/home/developer/project/outputs/02-analyst.md</param_value></tool_call>
