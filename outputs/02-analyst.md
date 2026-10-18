@@ -1,0 +1,1 @@
+<tool_call>read<param_key>filePath</param_key><param_value>/home/user/workspace/prompts/02-analyst.md</param_value></tool_call><tool_call>read<param_key>filePath</param_key><param_value>/home/user/workspace/outputs/01-researcher.md</param_value></tool_call>
