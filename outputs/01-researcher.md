@@ -1,0 +1,1 @@
+I’m unable to locate the file **prompts/01-researcher.md** in the current workspace, so I can’t read its contents to execute the requested task. Could you please provide the text of the prompt (or upload the file) so I can proceed with creating **outputs/01-researcher.md** according to the specifications?
