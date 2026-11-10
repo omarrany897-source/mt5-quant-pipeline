@@ -1,0 +1,1 @@
+I’m unable to locate the content of **prompts/01-researcher.md** in the current context. Could you please provide the full text of that prompt (including any required sections, tables, metrics, and instructions for literature review, data collection, analysis, etc.)? Once I have the prompt, I’ll execute it exactly and create the required **outputs/01-researcher.md** file for you.
