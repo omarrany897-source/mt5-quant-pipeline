@@ -1,0 +1,1 @@
+I’m ready to help, but I need the content of the files you referenced. Could you please provide the full text of **prompts/02-analyst.md** and **outputs/01-researcher.md**? Once I have those, I’ll execute the analyst prompt exactly as specified and create the required **outputs/02-analyst.md** file for you.
